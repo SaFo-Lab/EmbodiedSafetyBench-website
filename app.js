@@ -196,10 +196,14 @@ window.addEventListener("popstate", () => {
 // medals for the top three; and a matrix with every rate of every task type.
 const LV_ORDER = ["instruction", "semantic", "motion"];
 const VENDOR_MARK = { Anthropic: "✳", OpenAI: "◎", Google: "✦", Alibaba: "◈" };
+// A row whose evaluation is still running has no value; it comes last and has no rank.
+const pending = (v) => v == null;
 function ranked(rows, better) {
-  const ids = Object.keys(rows).sort((a, b) => (better === "higher" ? rows[b].value - rows[a].value : rows[a].value - rows[b].value));
+  const done = Object.keys(rows).filter((id) => !pending(rows[id].value));
+  const ids = done.sort((a, b) => (better === "higher" ? rows[b].value - rows[a].value : rows[a].value - rows[b].value));
   let rank = 0, prev = null;
-  return ids.map((id, k) => { if (rows[id].value !== prev) { rank = k + 1; prev = rows[id].value; } return [id, rank]; });
+  return ids.map((id, k) => { if (rows[id].value !== prev) { rank = k + 1; prev = rows[id].value; } return [id, rank]; })
+    .concat(Object.keys(rows).filter((id) => pending(rows[id].value)).map((id) => [id, null]));
 }
 function rankBoard(results, lv, el, compact) {
   const g = results.ranking[lv], names = Object.fromEntries(results.models.map((m) => [m.id, m]));
@@ -207,6 +211,10 @@ function rankBoard(results, lv, el, compact) {
   el.innerHTML = `<p class="question">${g.description}</p>
     <div class="rk"><div class="rk-head"><span></span><span></span><span class="scale"><i>0%</i><i>25%</i><i>50%</i><i>75%</i><i>100%</i></span><span class="mname">${g.metric} ${g.better === "higher" ? "↑" : "↓"}</span></div>
     ${order.map(([id, rank], k) => { const row = g.rows[id], m = names[id];
+      if (rank == null) return `<div class="rk-row running"><span class="medal">–</span>
+        <span class="who"><i class="vm">${VENDOR_MARK[m.vendor] || "•"}</i><b>${m.name}</b><em>${m.vendor}</em></span>
+        <span class="rbar"></span><span class="val run">Running</span>
+        ${compact ? "" : `<span class="also">The evaluation of this agent is still running.</span>`}</div>`;
       return `<div class="rk-row${k === 0 ? " top" : ""}"><span class="medal m${rank}">${rank}</span>
         <span class="who"><i class="vm">${VENDOR_MARK[m.vendor] || "•"}</i><b>${m.name}</b><em>${m.vendor}</em></span>
         <span class="rbar"><i class="${LEVEL_TAG[lv]}" style="width:${row.value}%"></i></span>
@@ -217,17 +225,18 @@ function matrix(results, el) {
   const names = Object.fromEntries(results.models.map((m) => [m.id, m]));
   // Agents ordered by their mean rank over the three headline rates.
   const meanRank = {};
-  LV_ORDER.forEach((lv) => ranked(results.ranking[lv].rows, results.ranking[lv].better).forEach(([id, rk]) => { meanRank[id] = (meanRank[id] || 0) + rk / 3; }));
+  LV_ORDER.forEach((lv) => ranked(results.ranking[lv].rows, results.ranking[lv].better).forEach(([id, rk]) => { meanRank[id] = (meanRank[id] || 0) + (rk == null ? results.models.length : rk) / 3; }));
   const ids = Object.keys(meanRank).sort((a, b) => meanRank[a] - meanRank[b]);
   const blocks = LV_ORDER.map((lv) => [lv, Object.entries(results.levels).filter(([, g]) => g.level === lv)]);
   el.innerHTML = `<p class="question">Every rate of every task type, one column per agent. Agents are ordered by their mean rank over the three levels. The best value of each row is underlined, and a darker cell is a better value.</p>
     <div class="tscroll"><table class="mx"><tr><th></th>${ids.map((id) => `<th>${names[id].name}</th>`).join("")}</tr>
     ${blocks.map(([lv, gs]) => `<tr class="mx-lv"><td colspan="${ids.length + 1}"><span class="tag ${LEVEL_TAG[lv]}">Level ${LV_ORDER.indexOf(lv) + 1}</span> ${LEVEL_NAMES[lv]} level</td></tr>` +
       gs.map(([gk, g]) => g.metrics.map((m) => {
-        const vals = ids.map((id) => g.rows[id][m.key]);
-        const best = vals.every((v) => v === vals[0]) ? null : (m.better === "higher" ? Math.max(...vals) : Math.min(...vals));
+        const vals = ids.map((id) => g.rows[id][m.key]), known = vals.filter((v) => !pending(v));
+        const best = known.every((v) => v === known[0]) ? null : (m.better === "higher" ? Math.max(...known) : Math.min(...known));
         return `<tr><td class="mx-name">${lv === "semantic" ? `<em>${g.short}</em> · ` : ""}${m.name} ${m.better === "higher" ? "↑" : "↓"}</td>
-          ${vals.map((v) => { const good = m.better === "higher" ? v / 100 : 1 - v / 100;
+          ${vals.map((v) => { if (pending(v)) return `<td><span class="mx-cell run">Running</span></td>`;
+            const good = m.better === "higher" ? v / 100 : 1 - v / 100;
             return `<td><span class="mx-cell${v === best ? " best" : ""}" style="--g:${(0.03 + 0.24 * good).toFixed(3)}">${v.toFixed(1)}<small>%</small></span></td>`; }).join("")}</tr>`;
       }).join("")).join("")).join("")}
     </table></div>`;

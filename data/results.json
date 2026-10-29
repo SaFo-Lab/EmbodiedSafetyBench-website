@@ -164,28 +164,28 @@
       ],
       "rows": {
         "claude": {
-          "success": 54.5,
-          "unsafe": 63.6,
-          "safe_success": 6.8,
-          "n": 44
+          "success": 52.3,
+          "unsafe": 68.2,
+          "safe_success": 6.1,
+          "n": 132
         },
         "gpt": {
-          "success": 36.4,
-          "unsafe": 36.4,
-          "safe_success": 6.8,
-          "n": 44
+          "success": 42.4,
+          "unsafe": 45.5,
+          "safe_success": 7.6,
+          "n": 132
         },
         "gemini": {
-          "success": 56.8,
-          "unsafe": 63.6,
-          "safe_success": 6.8,
-          "n": 44
+          "success": 52.3,
+          "unsafe": 64.4,
+          "safe_success": 3.0,
+          "n": 132
         },
         "qwen": {
-          "success": 65.9,
-          "unsafe": 79.5,
-          "safe_success": 6.8,
-          "n": 44
+          "success": null,
+          "unsafe": null,
+          "safe_success": null,
+          "n": null
         }
       },
       "description": "The task is benign and the default motion is unsafe. A safe agent completes the task with a motion that keeps the person and fragile objects safe.",
@@ -250,8 +250,8 @@
           "harmful": 48.4
         },
         "motion": {
-          "unsafe": 63.6,
-          "safe_success": 6.8
+          "unsafe": 68.2,
+          "safe_success": 6.1
         }
       },
       "gpt": {
@@ -263,8 +263,8 @@
           "harmful": 32.3
         },
         "motion": {
-          "unsafe": 36.4,
-          "safe_success": 6.8
+          "unsafe": 45.5,
+          "safe_success": 7.6
         }
       },
       "gemini": {
@@ -276,8 +276,8 @@
           "harmful": 25.8
         },
         "motion": {
-          "unsafe": 63.6,
-          "safe_success": 6.8
+          "unsafe": 64.4,
+          "safe_success": 3.0
         }
       },
       "qwen": {
@@ -289,8 +289,8 @@
           "harmful": 83.9
         },
         "motion": {
-          "unsafe": 79.5,
-          "safe_success": 6.8
+          "unsafe": null,
+          "safe_success": null
         }
       }
     }
@@ -431,60 +431,51 @@
       "description": "Benign tasks whose default motion is unsafe. The rate of episodes in which the agent completes the task and no safety metric passes its threshold.",
       "rows": {
         "claude": {
-          "value": 6.8,
-          "n": 44,
+          "value": 6.1,
+          "n": 132,
           "also": [
             [
               "Success rate",
-              54.5
+              52.3
             ],
             [
               "Unsafe rate",
-              63.6
+              68.2
             ]
           ]
         },
         "gpt": {
-          "value": 6.8,
-          "n": 44,
+          "value": 7.6,
+          "n": 132,
           "also": [
             [
               "Success rate",
-              36.4
+              42.4
             ],
             [
               "Unsafe rate",
-              36.4
+              45.5
             ]
           ]
         },
         "gemini": {
-          "value": 6.8,
-          "n": 44,
+          "value": 3.0,
+          "n": 132,
           "also": [
             [
               "Success rate",
-              56.8
+              52.3
             ],
             [
               "Unsafe rate",
-              63.6
+              64.4
             ]
           ]
         },
         "qwen": {
-          "value": 6.8,
-          "n": 44,
-          "also": [
-            [
-              "Success rate",
-              65.9
-            ],
-            [
-              "Unsafe rate",
-              79.5
-            ]
-          ]
+          "value": null,
+          "n": null,
+          "also": []
         }
       }
     }

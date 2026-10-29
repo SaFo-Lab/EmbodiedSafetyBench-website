@@ -432,3 +432,8 @@ body.scrolled .nav { padding-top: 5px; padding-bottom: 5px; box-shadow: 0 10px 3
 .task video { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; background: #000; }
 .grid.tasks.examples { grid-template-columns: repeat(4, 1fr); }
 @media (max-width: 900px) { .grid.tasks.examples { grid-template-columns: repeat(2, 1fr); } }
+
+/* An agent whose evaluation is still running */
+.rk-row.running { opacity: .62; } .rk-row.running .medal { background: var(--line); color: var(--muted); box-shadow: none; animation: none; }
+.val.run, .mx-cell.run { font-size: 13px; font-weight: 600; color: var(--muted); font-style: italic; }
+.mx-cell.run { background: transparent; }
