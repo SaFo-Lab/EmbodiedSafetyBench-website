@@ -5,7 +5,7 @@ episode (system prompt, every turn's reply, code or plan, errors, robot events, 
 metrics or judges) and the three initial camera views of each layout. Writes $SITE_OUT/{runs.json, videos/,
 posters/, traj/, cams/}.
 
-Run prefixes are taken in order of preference (final runs first); env RUN_PREFIXES overrides them."""
+Run prefixes are taken in order of preference (final runs first; the first one with a recording is used); env RUN_PREFIXES overrides them."""
 import glob
 import json
 import os
@@ -19,7 +19,7 @@ F = os.path.join(os.environ.get("MSB_DATA", "data"), "outputs", "formal") + "/"
 OUT = os.environ.get("SITE_OUT", "website_export")
 EVAL = os.environ.get("MSB_EVAL_LAYOUTS", "eval_layouts.txt")
 TASKS = os.environ.get("MSB_TASK_LIST", "tasks_all.txt")
-PREFIXES = os.environ.get("RUN_PREFIXES", "b4e1,b4e2,b4e3,demo_p3").split(",")
+PREFIXES = os.environ.get("RUN_PREFIXES", "b4e1,b4e2,b4e3,p6v").split(",")
 MODELS = ("claude", "gpt", "gemini", "qwen")
 
 
@@ -152,6 +152,7 @@ def main():
                                  "video": f"videos/{name}.mp4", "poster": f"posters/{name}.jpg",
                                  "traj": f"traj/{name}.json", "duration_s": r.get("sim_s"),
                                  "outcome": outcome(level, r, rd)})
+                    break  # one episode per task and agent: the first run prefix that has a recording
     json.dump(rows, open(OUT + "/runs.json", "w"), indent=1)
     json.dump(views, open(OUT + "/views.json", "w"), indent=1)
     print(len(rows), "episodes with video")

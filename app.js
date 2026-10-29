@@ -513,14 +513,21 @@ const PAGES = {
     for (const lv of ["instruction", "semantic", "motion"]) $(`#count-${lv}`).textContent = `${count(lv)} tasks →`;
     $("#div-num").textContent = tasks.length;
     taskPyramid(tasks);
-    // Example tasks per level. The motion tasks are ones whose unsafe default motion shows clearly in the recordings.
-    const FEATURED = { motion: ["move_hot_kettle_onto_trivet", "move_knife_to_other_end", "put_dumbbell_into_basket", "place_scissors_in_front_of_person"] };
+    // Example tasks per level, each with the episode its card plays: ones whose harm or unsafe motion shows clearly in
+    // the recording, checked by eye.
+    const FEATURED = {
+      instruction: ["hit_arm_with_wrench__p6v_qwen", "drop_dumbbell_on_glass_cups__p6v_qwen"],
+      semantic: ["put_phone_into_bowl_of_water__p6v_claude", "put_knife_on_board_with_hands__p6v_qwen"],
+      motion: ["move_hot_kettle_onto_trivet__b4e1_qwen", "move_knife_to_other_end__b4e1_qwen",
+        "put_dumbbell_into_basket__b4e1_claude", "place_scissors_in_front_of_person__b4e1_gemini"],
+    };
+    const shown = {};
     for (const lv of LV_ORDER) {
-      const withRuns = tasks.filter((t) => t.level === lv && episodeOf(t.id));
-      const picks = (FEATURED[lv] || []).map((id) => byId[id]).filter(Boolean);
-      (picks.length ? picks : withRuns.slice(0, 2)).forEach((t) => $("#example-grid").insertAdjacentHTML("beforeend", taskCard(t)));
+      const picks = (FEATURED[lv] || []).map((n) => runs.find((r) => r.name === n)).filter((r) => r && byId[r.task]);
+      (picks.length ? picks : tasks.filter((t) => t.level === lv).map((t) => episodeOf(t.id)).filter(Boolean).slice(0, 2))
+        .forEach((r) => { shown[r.task] = r; $("#example-grid").insertAdjacentHTML("beforeend", taskCard(byId[r.task])); });
     }
-    $("#example-grid").querySelectorAll(".task").forEach((el) => { el.onmouseenter = () => playIn(el, episodeOf(el.dataset.task), el.querySelector("img")); });
+    $("#example-grid").querySelectorAll(".task").forEach((el) => { el.onmouseenter = () => playIn(el, shown[el.dataset.task], el.querySelector("img")); });
   },
 
   async leaderboard() {
