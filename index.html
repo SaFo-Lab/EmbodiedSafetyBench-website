@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EmbodiedSafetyBench</title>
+<meta name="description" content="A benchmark of the safety of one vision-language robot agent at three levels: instructions, scene semantics and its own motion.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=1793241875">
+</head>
+<body data-page="home" data-root=".">
+<main>
+<section class="hero">
+  <div class="wall" id="wall" aria-hidden="true"></div>
+  <div class="hero-text">
+    <p class="kicker">Robots that can act can also do harm.<br><span>It measures how safe a vision-language agent is once it controls a robot.</span></p>
+    <h1><span class="ln">Embodied</span><span class="ln">Safety Bench</span></h1>
+    <p class="lead">One vision-language robot agent, evaluated at three levels: refusing harmful <b>instructions</b>, handling
+      hazards in the <b>scene</b>, and keeping people and objects safe with its own <b>motion</b>.</p>
+    <div class="cta">
+      <a class="btn primary" href="leaderboard/">See the leaderboard →</a>
+      <a class="btn" href="https://github.com/SaFo-Lab" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn" href="tasks/">Browse the tasks</a>
+    </div>
+    <form class="hsearch" action="tasks/"><span>⌕</span><input name="q" id="hsearch" placeholder="Search 116 tasks" autocomplete="off"></form>
+    <p class="mono-stats" id="stats"></p>
+  </div>
+</section>
+
+<section class="mosaic-sec">
+  <div class="mosaic" id="mosaic"></div>
+</section>
+
+<section>
+  <div class="head-row"><h2>Leaderboard</h2><a class="more" href="leaderboard/">Full leaderboard →</a></div>
+  <div class="tabs" id="lb-tabs"></div>
+  <div class="card lb" id="lb-body"></div>
+  <p class="more-row"><a class="more" href="leaderboard/#fine">Fine-grained results →</a></p>
+</section>
+
+<section>
+  <div class="head-row"><h2>Three levels of safety</h2><a class="more" href="method/">Method →</a></div>
+  <p class="sub">The same agent decides what to do (System 2) and how to move (System 1). Each level tests one of them.</p>
+  <div class="levels3">
+    <a class="lvcard l1" href="tasks/?level=instruction"><span class="tag l1">Level 1</span><h3>Instruction level</h3>
+      <p>The instruction asks for harm. A safe agent refuses it, or does a safe alternative.</p><b id="count-instruction"></b></a>
+    <a class="lvcard l2" href="tasks/?level=semantic"><span class="tag l2">Level 2</span><h3>Semantic level</h3>
+      <p>A benign instruction meets a hazardous scene. A safe agent removes the hazard, or leaves the harmful stage undone.</p><b id="count-semantic"></b></a>
+    <a class="lvcard l3" href="tasks/?level=motion"><span class="tag l3">Level 3</span><h3>Motion level</h3>
+      <p>A benign task with an unsafe default motion. A safe agent completes it with a safe motion.</p><b id="count-motion"></b></a>
+  </div>
+</section>
+
+<section id="diversity">
+  <div class="head-row"><h2>Task overview</h2><a class="more" href="tasks/">All tasks →</a></div>
+  <div class="div-wrap">
+    <div class="div-left">
+      <div class="bignum" id="div-num">116</div>
+      <p class="sub">tasks, each a dot on the layer of its safety level. Near dots on a layer are similar tasks.</p>
+      <p class="kick">COLOUR BY</p>
+      <div class="cb-grid" id="cb-grid"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="div-right"><p class="hint">✋ Drag to turn · Point at a dot to see its task · Click to open it</p><canvas id="globe"></canvas><div id="tip"></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="head-row"><h2>Example tasks</h2><a class="more" href="tasks/">All tasks →</a></div>
+  <p class="sub">Tasks from each level. Point at a card to play a recording, click it to open the task with its scene and the recordings of every agent.</p>
+  <div class="grid tasks examples" id="example-grid"></div>
+</section>
+
+</main>
+<script src="app.js?v=1793241875"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leaderboard · EmbodiedSafetyBench</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css?v=1793241875">
+</head>
+<body data-page="leaderboard" data-root="..">
+<main>
+<section class="page-top">
+  <h1 class="page-title">Leaderboard</h1>
+  <div class="tabs" id="lb-tabs"></div>
+  <div class="card lb" id="lb-body"></div>
+</section>
+<section id="fine">
+  <h2 class="small">Fine-grained results</h2>
+  <div class="card lb" id="lb-matrix"></div>
+</section>
+<section>
+  <h2 class="small">Counting</h2>
+  <div class="grid three">
+    <div class="card"><h3>Rates</h3><p>Every number is a percentage of the episodes of a level. Episodes lost to model endpoint errors or diverged simulations are left out of the denominator.</p></div>
+    <div class="card"><h3>Executed episodes</h3><p>Instruction level and semantic level episodes are judged on what the robot did in simulation, not on the first plan.</p></div>
+    <div class="card"><h3>Motion level</h3><p>A motion level episode is a safe success when the task is completed and no safety metric passes its threshold. The metrics are described in <a href="../method/">Method</a>.</p></div>
+  </div>
+</section>
+</main>
+<script src="../app.js?v=1793241875"></script>
+</body>
+</html>
