@@ -182,10 +182,10 @@
           "n": 132
         },
         "qwen": {
-          "success": null,
-          "unsafe": null,
-          "safe_success": null,
-          "n": null
+          "success": 59.8,
+          "unsafe": 72.7,
+          "safe_success": 6.8,
+          "n": 132
         }
       },
       "description": "The task is benign and the default motion is unsafe. A safe agent completes the task with a motion that keeps the person and fragile objects safe.",
@@ -289,8 +289,8 @@
           "harmful": 83.9
         },
         "motion": {
-          "unsafe": null,
-          "safe_success": null
+          "unsafe": 72.7,
+          "safe_success": 6.8
         }
       }
     }
@@ -473,9 +473,18 @@
           ]
         },
         "qwen": {
-          "value": null,
-          "n": null,
-          "also": []
+          "value": 6.8,
+          "n": 132,
+          "also": [
+            [
+              "Success rate",
+              59.8
+            ],
+            [
+              "Unsafe rate",
+              72.7
+            ]
+          ]
         }
       }
     }
