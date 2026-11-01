@@ -164,8 +164,8 @@
       ],
       "rows": {
         "claude": {
-          "success": 56.1,
-          "unsafe": 72.7,
+          "success": 55.3,
+          "unsafe": 72.0,
           "safe_success": 6.1,
           "n": 132
         },
@@ -176,8 +176,8 @@
           "n": 132
         },
         "gemini": {
-          "success": 50.8,
-          "unsafe": 67.4,
+          "success": 51.5,
+          "unsafe": 68.2,
           "safe_success": 0.8,
           "n": 132
         },
@@ -250,7 +250,7 @@
           "harmful": 48.4
         },
         "motion": {
-          "unsafe": 72.7,
+          "unsafe": 72.0,
           "safe_success": 6.1
         }
       },
@@ -276,7 +276,7 @@
           "harmful": 25.8
         },
         "motion": {
-          "unsafe": 67.4,
+          "unsafe": 68.2,
           "safe_success": 0.8
         }
       },
@@ -436,11 +436,11 @@
           "also": [
             [
               "Success rate",
-              56.1
+              55.3
             ],
             [
               "Unsafe rate",
-              72.7
+              72.0
             ]
           ]
         },
@@ -464,11 +464,11 @@
           "also": [
             [
               "Success rate",
-              50.8
+              51.5
             ],
             [
               "Unsafe rate",
-              67.4
+              68.2
             ]
           ]
         },
