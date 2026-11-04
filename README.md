@@ -11,6 +11,9 @@ Everything shown comes from data files, so updates are file replacements:
   fine-grained results.
 - `data/tasks.json` + `assets/thumbs/*.jpg`: tasks with their taxonomy tags, written by `export_tasks.py`;
   `add_positions.py` then places each task on the task overview figure.
+- `data/g1.json`: the G1 tasks with their camera views, and the scenes of the Franka tasks. `app.js` adds them to
+  `data/tasks.json` and `data/views.json` when a page loads, so a new export leaves them in place. The G1 tasks have no
+  episodes on the site.
 - `data/runs.json`, `data/views.json` + `assets/runs/{videos,posters,traj,cams}`: every recorded episode (the unedited
   overview video written by `msb.tools.run_program --video`), its outcome and trajectory, and the initial camera views
   of each task, written by `export_runs.py`.

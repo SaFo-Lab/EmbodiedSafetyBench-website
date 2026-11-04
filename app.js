@@ -13,7 +13,7 @@ const MODEL_NAMES = { claude: "Claude Opus 5.5", gpt: "GPT-6 Astra", gemini: "Ge
 const MODELS = Object.keys(MODEL_NAMES);
 // Taxonomies of the task browser: key in tasks.json, title, icon.
 const FACETS = [
-  ["level", "Safety level", "◆"], ["semantic_kind", "Semantic task type", "◇"], ["risk", "Risk", "⚠"],
+  ["level", "Safety level", "◆"], ["robot", "Robot", "◉"], ["scene", "Scene", "▦"], ["semantic_kind", "Semantic task type", "◇"], ["risk", "Risk", "⚠"],
   ["target", "Harm target", "◎"], ["person", "Person", "☺"], ["body", "Body part", "✋"],
   ["dimension", "Motion dimension", "↗"], ["action", "Action", "⚙"], ["objects", "Objects", "▣"],
   ["horizon", "Horizon", "⧗"],
@@ -35,10 +35,20 @@ function load(path) {
     document.head.appendChild(s);
   });
 }
-const data = (f) => load("data/" + f).then((d) => {
+// The G1 tasks and their camera views come from data/g1.json, so a new export of the Franka data leaves them in place.
+const data = async (f) => {
+  const d = await load("data/" + f);
+  if (f === "tasks.json" || f === "views.json") {
+    const g1 = await load("data/g1.json");
+    if (f === "tasks.json" && !d.some((t) => t.robot === "G1")) {
+      d.forEach((t) => { t.robot = "Franka"; t.scene = g1.franka_scenes[t.id] || "Table"; });
+      d.push(...g1.tasks);
+    }
+    if (f === "views.json") Object.assign(d, g1.views);
+  }
   if (f === "tasks.json") d.forEach((t) => { if (t.semantic_kind) SEMANTIC_KIND[t.id] = t.semantic_kind; });
   return d;
-});
+};
 
 // Shared navigation, footer, player, task drawer ------------------------------------------------------------------
 const NAV = [["leaderboard/", "Leaderboard", "leaderboard"], ["tasks/", "Tasks", "tasks"], ["demos/", "Episodes", "demos"],
@@ -130,6 +140,7 @@ function taskCard(t, extra = "") {
     ${t.thumb ? `<img loading="lazy" src="${url("assets/" + t.thumb)}" alt="">` : ""}
     <div class="body"><p>${esc(t.instruction)}</p><div class="meta">
       <span class="tag ${LEVEL_TAG[t.level]}">${LEVEL_NAMES[t.level]}</span>
+      ${t.robot === "G1" ? `<span class="chip strong">G1</span>` : ""}
       ${vals(t, "risk").map((v) => `<span class="chip risk">⚠ ${v}</span>`).join("")}
       ${vals(t, "dimension").map((v) => `<span class="chip">↗ ${v}</span>`).join("")}
       ${t.horizon === "multi-stage" ? `<span class="chip">⧗ ${t.stages} stages</span>` : ""}${extra}</div></div></a>`;
@@ -150,12 +161,12 @@ async function openTask(id, push = true) {
     <h2 class="drawer-title">${esc(t.instruction)}</h2>
     <div class="meta big">${vals(t, "risk").map((v) => `<span class="chip risk">⚠ ${v}</span>`).join("")}${vals(t, "dimension").map((v) => `<span class="chip">↗ ${v}</span>`).join("")}</div>
     <div class="drawer-media">${first ? `<video src="${url("assets/runs/" + first.video)}" poster="${url("assets/runs/" + first.poster)}" controls muted playsinline></video><span class="media-tag">${runLabel(first)}</span>`
-      : t.thumb ? `<img src="${url("assets/" + t.thumb)}" alt=""><span class="media-tag">Evaluation layout</span>` : ""}</div>
+      : t.thumb ? `<img src="${url("assets/" + t.thumb)}" alt=""><span class="media-tag">${t.robot === "G1" ? "Validated layout" : "Evaluation layout"}</span>` : ""}</div>
     ${first ? `<a class="watch" href="${runUrl(first)}"><b>Episodes step by step</b><span>${runLabel(first)}${mine.length > 1 ? ` and ${mine.length - 1} more` : ""}: the agent's replies and programs, the robot's actions, and the recording</span><i>→</i></a>` : ""}
-    <h3>Results</h3>
+    ${t.robot === "G1" ? "" : `<h3>Results</h3>
     <table class="res"><tr><th>Agent</th><th>Episodes</th></tr>${MODELS.map((m) => `<tr><td><b>${MODEL_NAMES[m]}</b></td><td>${byModel[m].length
       ? byModel[m].map((r) => { const [v, cls] = verdict(r); return `<a class="sq ${cls}" href="${runUrl(r)}" title="${runLabel(r)}: ${v}">${r.final ? "E" + r.episode : "Earlier"} · ${v}</a>`; }).join("")
-      : `<span class="muted">Not recorded yet</span>`}</td></tr>`).join("")}</table>
+      : `<span class="muted">Not recorded yet</span>`}</td></tr>`).join("")}</table>`}
     <h3>Taxonomy</h3>
     <table class="tags">${FACETS.filter(([k]) => vals(t, k).length).map(([k, title, icon]) =>
       `<tr><th>${icon} ${title}</th><td>${vals(t, k).map((v) => `<a class="fchip" href="${url("tasks/?" + k + "=" + encodeURIComponent(v))}">${label(k, v)}</a>`).join("")}</td></tr>`).join("")}</table>
@@ -261,7 +272,7 @@ const fmtT = (s) => (s == null ? "–" : s >= 60 ? `${Math.floor(s / 60)}:${Stri
 const PALETTE = ["#4c6ef5", "#e8590c", "#12b886", "#d6336c", "#f59f00", "#7950f2", "#15aabf", "#82c91e", "#fd7e14", "#be4bdb", "#868e96", "#20c997"];
 const LEVEL_COLOR = { instruction: "#c2255c", semantic: "#e67700", motion: "#1971c2" };
 function taskPyramid(tasks) {
-  const DIMS = [["level", "safety levels"], ["risk", "risk categories"], ["target", "harm targets"], ["dimension", "motion dimensions"],
+  const DIMS = [["level", "safety levels"], ["robot", "robots"], ["risk", "risk categories"], ["target", "harm targets"], ["dimension", "motion dimensions"],
     ["action", "actions"], ["objects", "object types"], ["person", "person settings"]];
   const groups = Object.fromEntries(DIMS.map(([k]) => {
     const c = {};
@@ -497,7 +508,7 @@ const PAGES = {
     const count = (lv) => tasks.filter((t) => t.level === lv).length;
     const risks = new Set(tasks.flatMap((t) => vals(t, "risk"))).size;
     const objects = new Set(tasks.flatMap((t) => vals(t, "objects"))).size;
-    $("#stats").innerHTML = [[tasks.length, "tasks"], [3, "safety levels"], [risks, "risk categories"],
+    $("#stats").innerHTML = [[tasks.length, "tasks"], [3, "safety levels"], [2, "robots"], [risks, "risk categories"],
       [objects, "object categories"]].map(([n, l]) => `<b>${n}</b> ${l}`).join('<i>·</i>');
     $("#hsearch").placeholder = `Search ${tasks.length} tasks`;
     // Tilted wall of scene thumbnails behind the hero text.
@@ -510,15 +521,27 @@ const PAGES = {
       Object.assign(v, { src: url("assets/runs/" + r.video), muted: true, loop: true, playsInline: true, autoplay: true });
       if (before) before.replaceWith(v); else el.appendChild(v); v.play().catch(() => {}); };
     // Mosaic of the tasks in their evaluation scenes; a few tiles play a recorded episode of their task.
-    const pool = LV_ORDER.map((lv) => tasks.filter((t) => t.level === lv && t.thumb));
+    const pool = LV_ORDER.map((lv) => tasks.filter((t) => t.level === lv && t.thumb && t.robot !== "G1"));
+    // Every third motion tile is a G1 task.
+    tasks.filter((t) => t.robot === "G1" && t.thumb).forEach((t, k) => pool[2].splice(3 * k + 2, 0, t));
     const order = []; for (let k = 0; order.length < tasks.length && k < tasks.length; k++) pool.forEach((p) => { if (p[k]) order.push(p[k]); });
     const tiles = order.slice(0, 84);
     $("#mosaic").innerHTML = `<div class="mosaic-grid">${tiles.map((t, k) => `<a class="tile" href="${taskUrl(t.id)}" data-k="${k}" style="--t:${k * 14}ms">
-      <img src="${url("assets/" + t.thumb)}" alt=""><span class="tl ${LEVEL_TAG[t.level]}">${LEVEL_NAMES[t.level]}</span></a>`).join("")}</div>
-      <div class="mosaic-cap"><b>${tasks.length} tasks</b><span>A tile is one task in its evaluation scene. Point at a tile to play a recording of it, click it to open the task.</span><a href="tasks/">All tasks →</a></div>`;
+      <img src="${url("assets/" + t.thumb)}" alt=""><span class="tl ${LEVEL_TAG[t.level]}">${LEVEL_NAMES[t.level]}${t.robot === "G1" ? " · G1" : ""}</span></a>`).join("")}</div>
+      <div class="mosaic-cap"><b>${tasks.length} tasks</b><span>A tile is one task in its scene. Point at a tile of a Franka task to play a recording of it, click a tile to open the task.</span><a href="tasks/">All tasks →</a></div>`;
     $("#mosaic").querySelectorAll(".tile").forEach((el) => { const t = tiles[+el.dataset.k]; el.onmouseenter = () => playIn(el, episodeOf(t.id)); });
     [5, 22, 38, 51, 67].forEach((k) => { const el = $(`#mosaic .tile[data-k="${k}"]`); if (el) playIn(el, episodeOf(tiles[k].id)); });
     tabs($("#lb-tabs"), LV_ORDER.map((lv) => [lv, `${LEVEL_NAMES[lv]} level`]), (lv) => rankBoard(results, lv, $("#lb-body"), true));
+    // The robots: the Franka, and the G1 by the rooms it walks through.
+    const inScene = (s) => tasks.filter((t) => t.robot === "G1" && t.scene === s);
+    const G1_SCENES = [["Hospital corridor", "carry_box_to_end_of_hallway", "A person on the way, two people beside it, a switched-on space heater on the way."],
+      ["Office hall", "carry_box_to_table_past_floor_vase", "A person on the way, a kettle taken from a lit stove, a ceramic floor vase."],
+      ["Kitchen", "carry_pot_of_hot_soup_to_stove", "Knives, scissors, hot pots and kettles carried to the counter, the stove or a dining table."]];
+    const franka = tasks.filter((t) => t.robot === "Franka");
+    $("#robots").innerHTML = `<a class="robot-card" href="tasks/?robot=Franka"><img loading="lazy" src="${url("assets/thumbs/move_hot_kettle_onto_trivet.jpg")}" alt="">
+        <div><span class="chip strong">Franka</span><h3>At a table or a counter</h3><p>An arm next to a seated or standing person, at all three levels.</p><b>${franka.length} tasks →</b></div></a>` +
+      G1_SCENES.map(([s, id, text]) => `<a class="robot-card" href="tasks/?robot=G1&scene=${encodeURIComponent(s)}"><img loading="lazy" src="${url("assets/thumbs/" + id + ".jpg")}" alt="">
+        <div><span class="chip strong">G1</span><h3>${s}</h3><p>${text}</p><b>${inScene(s).length} tasks →</b></div></a>`).join("");
     for (const lv of ["instruction", "semantic", "motion"]) $(`#count-${lv}`).textContent = `${count(lv)} tasks →`;
     $("#div-num").textContent = tasks.length;
     taskPyramid(tasks);
@@ -555,7 +578,7 @@ const PAGES = {
     runs.forEach((r) => { recorded[r.task] = (recorded[r.task] || 0) + 1; });
     const q0 = new URLSearchParams(location.search);
     const picked = {};   // facet -> chosen values (OR inside a facet, AND across facets)
-    const openGroups = new Set(["risk", "target", "dimension", "semantic_kind"]);
+    const openGroups = new Set(["robot", "scene", "risk", "target", "dimension", "semantic_kind"]);
     const expanded = new Set();
     FACETS.forEach(([k]) => { picked[k] = new Set(q0.getAll(k)); });
     const matches = (t, skip) => FACETS.every(([k]) => k === skip || !picked[k].size || vals(t, k).some((v) => picked[k].has(v)));
