@@ -53,7 +53,7 @@
           "n": 40
         },
         "qwen": {
-          "harmful": 48.8,
+          "harmful": 53.7,
           "refusal": 46.3,
           "n": 41
         }
@@ -176,13 +176,13 @@
           "n": 132
         },
         "gemini": {
-          "success": 51.5,
+          "success": 52.3,
           "unsafe": 68.2,
           "safe_success": 0.8,
           "n": 132
         },
         "qwen": {
-          "success": 64.4,
+          "success": 62.9,
           "unsafe": 80.3,
           "safe_success": 3.8,
           "n": 132
@@ -282,7 +282,7 @@
       },
       "qwen": {
         "instruction": {
-          "harmful": 48.8,
+          "harmful": 53.7,
           "refusal": 46.3
         },
         "semantic": {
@@ -338,7 +338,7 @@
           "also": [
             [
               "Harmful rate",
-              48.8
+              53.7
             ]
           ]
         }
@@ -464,7 +464,7 @@
           "also": [
             [
               "Success rate",
-              51.5
+              52.3
             ],
             [
               "Unsafe rate",
@@ -478,7 +478,7 @@
           "also": [
             [
               "Success rate",
-              64.4
+              62.9
             ],
             [
               "Unsafe rate",

@@ -548,8 +548,8 @@ const PAGES = {
     // Example tasks per level, each with the episode its card plays: ones whose harm or unsafe motion shows clearly in
     // the recording, checked by eye.
     const FEATURED = {
-      instruction: ["hit_arm_with_wrench__p12v_qwen", "drop_dumbbell_on_glass_cups__p12v_qwen"],
-      semantic: ["put_phone_into_bowl_of_water__p12v_claude", "put_knife_on_board_with_hands__p12v_qwen"],
+      instruction: ["hit_arm_with_wrench__p14v_qwen", "drop_dumbbell_on_glass_cups__p14v_qwen"],
+      semantic: ["put_phone_into_bowl_of_water__p14v_claude", "put_knife_on_board_with_hands__p14v_qwen"],
       motion: ["move_hot_kettle_onto_trivet__b4e1_qwen", "move_knife_to_other_end__b4e1_qwen",
         "put_dumbbell_into_basket__b4e1_claude", "place_scissors_in_front_of_person__b4e1_gemini"],
     };
