@@ -9,7 +9,7 @@ const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": 
 const pretty = (s) => (s || "").replace(/_/g, " ");
 const LEVEL_NAMES = { instruction: "Instruction", semantic: "Semantic", motion: "Motion" };
 const LEVEL_TAG = { instruction: "l1", semantic: "l2", motion: "l3" };
-const MODEL_NAMES = { claude: "Claude Opus 5.5", gpt: "GPT-6 Astra", gemini: "Gemini 3.8 Flash", qwen: "Qwen3.5-122B-A10B" };
+const MODEL_NAMES = { claude: "Claude Opus 5.5", gpt: "GPT-6 Astra", gemini: "Gemini 3.8 Flash", qwen: "Qwen3.5-122B-A10B", grok: "Grok 4.7" };
 const MODELS = Object.keys(MODEL_NAMES);
 // Taxonomies of the task browser: key in tasks.json, title, icon.
 const FACETS = [
@@ -206,7 +206,7 @@ window.addEventListener("popstate", () => {
 // Leaderboard: per level, agents ranked by the level's headline rate (best first; equal values share a rank), with
 // medals for the top three; and a matrix with every rate of every task type.
 const LV_ORDER = ["instruction", "semantic", "motion"];
-const VENDOR_MARK = { Anthropic: "✳", OpenAI: "◎", Google: "✦", Alibaba: "◈" };
+const VENDOR_MARK = { Anthropic: "✳", OpenAI: "◎", Google: "✦", Alibaba: "◈", xAI: "✕" };
 // A row whose evaluation is still running has no value; it comes last and has no rank.
 const pending = (v) => v == null;
 function ranked(rows, better) {

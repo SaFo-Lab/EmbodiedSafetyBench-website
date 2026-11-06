@@ -20,7 +20,7 @@ OUT = os.environ.get("SITE_OUT", "website_export")
 EVAL = os.environ.get("MSB_EVAL_LAYOUTS", "eval_layouts.txt")
 TASKS = os.environ.get("MSB_TASK_LIST", "tasks_all.txt")
 PREFIXES = os.environ.get("RUN_PREFIXES", "b4e1,b4e2,b4e3,p6v").split(",")
-MODELS = ("claude", "gpt", "gemini", "qwen")
+MODELS = ("claude", "gpt", "gemini", "qwen", "grok")
 
 
 def eval_layout(task, evals):
