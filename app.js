@@ -5,6 +5,9 @@ const ROOT = document.body.dataset.root || ".";
 const PAGE = document.body.dataset.page;
 const $ = (s, el = document) => el.querySelector(s);
 const url = (p) => `${ROOT}/${p}`;
+// The episode recordings are kept in a Hugging Face dataset, since together they are too large for GitHub Pages.
+const VIDEO_ROOT = "https://huggingface.co/datasets/Ethan271/EmbodiedSafetyBench-videos/resolve/main/";
+const videoUrl = (r) => VIDEO_ROOT + r.video;
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const pretty = (s) => (s || "").replace(/_/g, " ");
 const LEVEL_NAMES = { instruction: "Instruction", semantic: "Semantic", motion: "Motion" };
@@ -105,7 +108,7 @@ const runUrl = (r) => url("run/?r=" + encodeURIComponent(r.name));
 const taskUrl = (id) => url("tasks/?task=" + encodeURIComponent(id));
 
 function play(r, title) {
-  $("#player-video").src = url("assets/runs/" + r.video);
+  $("#player-video").src = videoUrl(r);
   $("#player-cap").innerHTML = `${esc(title)} · ${runLabel(r)} · ${verdict(r)[0]} · <a href="${runUrl(r)}">Trajectory →</a>`;
   $("#player").showModal();
   $("#player-video").play();
@@ -125,7 +128,7 @@ function runCard(r, title, showTask) {
   c.onmouseenter = () => {
     if (!vid) {
       vid = document.createElement("video");
-      Object.assign(vid, { src: url("assets/runs/" + r.video), muted: true, loop: true, playsInline: true });
+      Object.assign(vid, { src: videoUrl(r), muted: true, loop: true, playsInline: true });
       wrap.appendChild(vid);
     }
     vid.play().catch(() => {});
@@ -160,7 +163,7 @@ async function openTask(id, push = true) {
     <p class="eyebrow"><span class="tag ${LEVEL_TAG[t.level]}">${LEVEL_NAMES[t.level]} level</span> TASK · ${esc(t.id)}</p>
     <h2 class="drawer-title">${esc(t.instruction)}</h2>
     <div class="meta big">${vals(t, "risk").map((v) => `<span class="chip risk">⚠ ${v}</span>`).join("")}${vals(t, "dimension").map((v) => `<span class="chip">↗ ${v}</span>`).join("")}</div>
-    <div class="drawer-media">${first ? `<video src="${url("assets/runs/" + first.video)}" poster="${url("assets/runs/" + first.poster)}" controls muted playsinline></video><span class="media-tag">${runLabel(first)}</span>`
+    <div class="drawer-media">${first ? `<video src="${videoUrl(first)}" poster="${url("assets/runs/" + first.poster)}" controls muted playsinline></video><span class="media-tag">${runLabel(first)}</span>`
       : t.thumb ? `<img src="${url("assets/" + t.thumb)}" alt=""><span class="media-tag">${t.robot === "G1" ? "Validated layout" : "Evaluation layout"}</span>` : ""}</div>
     ${first ? `<a class="watch" href="${runUrl(first)}"><b>Episodes step by step</b><span>${runLabel(first)}${mine.length > 1 ? ` and ${mine.length - 1} more` : ""}: the agent's replies and programs, the robot's actions, and the recording</span><i>→</i></a>` : ""}
     ${t.robot === "G1" ? "" : `<h3>Results</h3>
@@ -522,7 +525,7 @@ const PAGES = {
     const bad = (r) => r.outcome.unsafe || r.outcome.harmful ? 1 : 0;
     const episodeOf = (id) => runs.filter((r) => r.task === id).sort((x, y) => bad(y) - bad(x) || y.final - x.final)[0];
     const playIn = (el, r, before) => { if (!r || el.querySelector("video")) return; const v = document.createElement("video");
-      Object.assign(v, { src: url("assets/runs/" + r.video), muted: true, loop: true, playsInline: true, autoplay: true });
+      Object.assign(v, { src: videoUrl(r), muted: true, loop: true, playsInline: true, autoplay: true });
       if (before) before.replaceWith(v); else el.appendChild(v); v.play().catch(() => {}); };
     // Mosaic of the tasks in their evaluation scenes; a few tiles play a recorded episode of their task.
     const pool = LV_ORDER.map((lv) => tasks.filter((t) => t.level === lv && t.thumb && t.robot !== "G1"));
@@ -739,7 +742,7 @@ const PAGES = {
       ${tr.system ? `<details class="sys"><summary>System prompt and task message</summary><pre class="msg">${esc(tr.system)}</pre><pre class="msg">${esc((turns[0] || {}).text)}</pre></details>` : ""}
       <div class="runcols">
         <div class="left">
-          <div class="card"><h4>Recording</h4><video id="run-video" src="${url("assets/runs/" + r.video)}" controls playsinline></video>
+          <div class="card"><h4>Recording</h4><video id="run-video" src="${videoUrl(r)}" controls playsinline></video>
             <p class="sub small">Overview camera, unedited. A time in the trajectory moves the recording to that moment.</p></div>
           <div class="card"><h4>Outcome</h4><table class="tags">${facts}</table>${tr.error ? `<div class="err">${esc(String(tr.error).split("\n").slice(-2).join(" "))}</div>` : ""}</div>
           ${(views[r.task] || []).length ? `<div class="card"><h4>Initial camera views</h4><div class="cams">${views[r.task].map((c) => `<figure><img loading="lazy" src="${url("assets/runs/" + c.image)}" alt=""><figcaption>${c.camera}</figcaption></figure>`).join("")}</div>

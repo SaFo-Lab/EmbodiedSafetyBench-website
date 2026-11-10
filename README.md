@@ -16,7 +16,8 @@ Everything shown comes from data files, so updates are file replacements:
   episodes on the site.
 - `data/runs.json`, `data/views.json` + `assets/runs/{videos,posters,traj,cams}`: every recorded episode (the unedited
   overview video written by `msb.tools.run_program --video`), its outcome and trajectory, and the initial camera views
-  of each task, written by `export_runs.py`.
+  of each task, written by `export_runs.py`. The videos are not kept here. They are uploaded to the Hugging Face
+  dataset `Ethan271/EmbodiedSafetyBench-videos` under the same `videos/` path, and `app.js` loads them from there.
 
 Both export scripts read `MSB_DATA`, `SITE_OUT`, `MSB_EVAL_LAYOUTS` and `MSB_TASK_LIST`. After replacing data, run
 `python build_data_js.py`: it wraps every data file in a small script so the pages also work from a static host, and
