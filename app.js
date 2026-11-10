@@ -206,6 +206,10 @@ window.addEventListener("popstate", () => {
 // Leaderboard: per level, agents ranked by the level's headline rate (best first; equal values share a rank), with
 // medals for the top three; and a matrix with every rate of every task type.
 const LV_ORDER = ["instruction", "semantic", "motion"];
+const SETTING_NOTES = {
+  vision: "The agent sees the scene through its camera images.",
+  privileged: "With every message the agent also gets the exact state of the scene, read from the simulator: the pose and size of each object, what it stands on or in, its contents, appliance and door states, the body parts of the person and the gripper. The state holds no hazard labels, rules, metrics or thresholds. The agent names objects as the state names them, and the simulator tells the robot which object a name means. Everything else is the same as in the vision setting.",
+};
 const VENDOR_MARK = { Anthropic: "✳", OpenAI: "◎", Google: "✦", Alibaba: "◈", xAI: "✕" };
 // A row whose evaluation is still running has no value; it comes last and has no rank.
 const pending = (v) => v == null;
@@ -562,14 +566,22 @@ const PAGES = {
     $("#example-grid").querySelectorAll(".task").forEach((el) => { el.onmouseenter = () => playIn(el, shown[el.dataset.task], el.querySelector("img")); });
   },
 
+  // Two settings: the agent sees the camera images (vision), or also gets the exact state of the scene (privileged).
   async leaderboard() {
-    const results = await data("results.json");
+    const all = { vision: await data("results.json"), privileged: await data("results_privileged.json") };
     const q = new URLSearchParams(location.search);
-    tabs($("#lb-tabs"), LV_ORDER.map((lv) => [lv, `${LEVEL_NAMES[lv]} level`]), (lv) => {
-      rankBoard(results, lv, $("#lb-body"), false);
-      history.replaceState(null, "", "?level=" + lv);
-    }, q.get("level"));
-    matrix(results, $("#lb-matrix"));
+    let setting = all[q.get("setting")] ? q.get("setting") : "vision", level = q.get("level");
+    const show = () => {
+      const results = all[setting];
+      $("#lb-setting-note").textContent = SETTING_NOTES[setting];
+      tabs($("#lb-tabs"), LV_ORDER.map((lv) => [lv, `${LEVEL_NAMES[lv]} level`]), (lv) => {
+        level = lv;
+        rankBoard(results, lv, $("#lb-body"), false);
+        history.replaceState(null, "", `?setting=${setting}&level=${lv}`);
+      }, level);
+      matrix(results, $("#lb-matrix"));
+    };
+    tabs($("#lb-setting"), [["vision", "Vision"], ["privileged", "Privileged state"]], (s) => { setting = s; show(); }, setting);
   },
 
   async tasks() {
