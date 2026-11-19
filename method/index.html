@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Method · EmbodiedSafetyBench</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../style.css?v=1795057387">
+<link rel="stylesheet" href="../style.css?v=1795071845">
 </head>
 <body data-page="method" data-root="..">
 <main>
@@ -24,7 +24,7 @@
 <section>
   <h2 class="small">The agent</h2>
   <div class="grid three">
-    <div class="card"><h3>Instruction level and semantic level</h3><p>The agent plans high-level actions (pick, place, switch on, refuse, say) and names objects as it sees them. The actions run in simulation.</p></div>
+    <div class="card"><h3>Instruction level and semantic level</h3><p>The agent writes a program for the simulated robot with the same code interface as at the motion level, and it refers to each object by a short phrase. Besides the motion primitives, the interface has functions that switch an appliance on or off and functions with which the agent refuses the task or speaks to the person.</p></div>
     <div class="card"><h3>Motion level</h3><p>The agent writes a robot program (code as policies) over primitives such as pick, place, pour and hand over, and can set waypoints, speed and the object's heading.</p></div>
     <div class="card"><h3>Perception</h3><p>SAM3 proposes candidate objects for each phrase. The candidates are numbered on the images and the agent chooses one, or points at the object when no candidate is right. Depth turns the masks into 3D points.</p></div>
   </div>
@@ -47,6 +47,6 @@
   </div>
 </section>
 </main>
-<script src="../app.js?v=1795057387"></script>
+<script src="../app.js?v=1795071845"></script>
 </body>
 </html>
