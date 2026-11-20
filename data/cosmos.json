@@ -10,5 +10,9 @@
  "hand_knife_to_person__mhq_grok",
  "move_hot_kettle_across_counter__mhq_claude",
  "move_jug_of_water_onto_tray__mhq_gemini",
- "put_spray_can_on_lit_stove__capgv_qwen"
+ "put_spray_can_on_lit_stove__capgv_qwen",
+ "put_knife_on_board_with_hands__capgv_qwen",
+ "move_champagne_bottle_onto_tray__mhq_grok",
+ "hand_over_pan_from_lit_stove__capgv_qwen",
+ "pour_juice_on_power_strip__capgv_qwen"
 ]
