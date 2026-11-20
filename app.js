@@ -401,9 +401,13 @@ function taskPyramid(tasks, root, start = "level") {
       ctx.fillStyle = dark() ? "#9aa3b2" : "#5d6573"; ctx.font = "12px Inter, sans-serif"; ctx.fillText(`${n} tasks`, x, yScr + 9);
       ctx.font = "600 13px Inter, sans-serif";
     }
-    ctx.fillStyle = dark() ? "#9aa3b2" : "#5d6573"; ctx.font = "12px Inter, sans-serif";
-    ctx.fillText("System 2, task decisions", W - 150, project([0, 1.15, 0])[1] - 46);
-    ctx.fillText("System 1, motion", W - 150, project([0, APEX, 0])[1] + 6);
+    // The system each part of the pyramid tests, above the top layer and below the apex.
+    const sysLabel = (name, text, y) => {
+      ctx.fillStyle = dark() ? "#eceef2" : "#16181d"; ctx.font = "700 17px Inter, sans-serif"; ctx.fillText(name, W - 150, y);
+      ctx.fillStyle = dark() ? "#9aa3b2" : "#5d6573"; ctx.font = "13px Inter, sans-serif"; ctx.fillText(text, W - 150, y + 18);
+    };
+    sysLabel("System 2", "Task decisions", project([0, 1.15, 0])[1] - 58);
+    sysLabel("System 1", "Motion", project([0, APEX, 0])[1] + 2);
     canvas._pts = pts;
   };
   const loop = () => { if (!drag && !hover) yaw += 0.003; draw(); requestAnimationFrame(loop); };
@@ -761,26 +765,23 @@ const PAGES = {
     // 2 One unsafe episode, full screen.
     $("#harm-video").innerHTML = vtile(HARM_EP);
     $("#harm-cap").innerHTML = epCap(HARM_EP);
-    // 3 The three levels: the inverted pyramid beside one row per level (#lv-list), or a stack of boxes (#levels).
+    // 3 The three levels: the inverted pyramid beside one row per level, grouped by the system each level tests (System 2
+    // for the two levels of task decisions, System 1 for the motion level).
     const LV_TEXT = { instruction: "The instruction asks for harm.", semantic: "A benign instruction in a scene with a hazard.",
       motion: "A benign task whose default motion is unsafe." };
-    if ($("#lv-list")) {
-      const pyr = taskPyramid(tasks, $("#s-levels"));
-      $("#lv-list").innerHTML = LV_ORDER.map((lv, i) => `<div class="lv-row ${LEVEL_TAG[lv]}" data-lv="${lv}"><div>
-        <i>Level ${i + 1} · ${lv === "motion" ? "System 1" : "System 2"}</i><h3>${LEVEL_NAMES[lv]}</h3>
+    const pyr = taskPyramid(tasks, $("#s-levels"));
+    const lvRow = (lv) => `<div class="lv-row ${LEVEL_TAG[lv]}" data-lv="${lv}"><div>
+        <i>Level ${LV_ORDER.indexOf(lv) + 1}</i><h3>${LEVEL_NAMES[lv]}</h3>
         <p>${LV_TEXT[lv]}</p><b>${tasks.filter((t) => t.level === lv).length} tasks</b></div>
-        <div class="vgrid g2">${LEVEL_EP[lv].map((n) => vtile(n)).join("")}</div></div>`).join("");
-      const rows = [...$("#lv-list").children];
-      rows.forEach((row) => {
-        row.onmouseenter = () => { pyr.focus(row.dataset.lv); rows.forEach((r) => r.classList.toggle("dim", r !== row)); };
-        row.onmouseleave = () => { pyr.focus(null); rows.forEach((r) => r.classList.remove("dim")); };
-      });
-    }
-    if ($("#s-cover")) taskPyramid(tasks, $("#s-cover"), "risk");
-    if ($("#levels")) $("#levels").innerHTML = `<div class="sys s2"><b>System 2</b><span>what to do</span></div><div class="sys s1"><b>System 1</b><span>how to move</span></div>` +
-      LV_ORDER.map((lv, i) => `<div class="layer ${LEVEL_TAG[lv]}" style="grid-row:${i + 1}"><div class="layer-t"><i>Level ${i + 1}</i><h3>${LEVEL_NAMES[lv]}</h3>
-        <p>${LV_TEXT[lv]}</p><b>${tasks.filter((t) => t.level === lv).length} tasks</b></div>
-        <div class="vgrid g2">${LEVEL_EP[lv].map((n) => vtile(n, esc(byId[run[n].task].instruction), `${MODEL_NAMES[run[n].model]} · ${outcomeText(run[n])}`)).join("")}</div></div>`).join("");
+        <div class="vgrid g2">${LEVEL_EP[lv].map((n) => vtile(n)).join("")}</div></div>`;
+    $("#lv-list").innerHTML = `<div class="sys s2"><b>System 2</b><span>Task decisions</span></div>${lvRow("instruction")}${lvRow("semantic")}
+      <div class="sys s1"><b>System 1</b><span>Motion</span></div>${lvRow("motion")}`;
+    const rows = [...$("#lv-list").querySelectorAll(".lv-row")];
+    rows.forEach((row) => {
+      row.onmouseenter = () => { pyr.focus(row.dataset.lv); rows.forEach((r) => r.classList.toggle("dim", r !== row)); };
+      row.onmouseleave = () => { pyr.focus(null); rows.forEach((r) => r.classList.remove("dim")); };
+    });
+    taskPyramid(tasks, $("#s-cover"), "risk");
     // 4 The two simulators. RoboCasa shows scene images only: its episodes are not on this site.
     const tally = (k) => { const c = {}; rc.scenes.forEach((s) => { c[s[k]] = (c[s[k]] || 0) + 1; }); return Object.entries(c).sort((a, b) => b[1] - a[1]); };
     const chips = (pairs) => `<div class="sim-chips">${pairs.map(([v, n]) => `<span>${cap(v)} <b>${n}</b></span>`).join("")}</div>`;

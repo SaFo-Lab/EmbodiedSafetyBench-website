@@ -510,22 +510,6 @@ body.deck .nav, body.deck footer { display: none; }
 .s-cap { color: #e9ecef; font-size: clamp(15px, 1.4vw, 22px); margin: 0; }
 .s-cap span { color: #ff8787; margin-left: 10px; font-weight: 600; }
 
-/* 3 The three levels as a stack. */
-.stack { display: grid; grid-template-columns: minmax(120px, 160px) 1fr; gap: 14px 22px; }
-.sys { grid-column: 1; border-left: 3px solid; padding-left: 16px; display: flex; flex-direction: column; justify-content: center; }
-.sys.s2 { grid-row: 1 / 3; border-color: var(--l2c); }
-.sys.s1 { grid-row: 3; border-color: var(--l3c); }
-.sys b { color: var(--text); font-size: clamp(18px, 1.7vw, 28px); }
-.sys span { color: var(--muted); font-size: clamp(13px, 1.1vw, 17px); }
-.layer { grid-column: 2; display: grid; grid-template-columns: minmax(200px, 1fr) auto; gap: 22px; align-items: center; padding: 14px 14px 14px 22px;
-  border: 1px solid var(--line); border-top: 3px solid var(--lc); border-radius: 14px; background: var(--card); }
-.layer.l1 { --lc: var(--l1c); } .layer.l2 { --lc: var(--l2c); } .layer.l3 { --lc: var(--l3c); }
-.layer-t i { font-style: normal; color: var(--lc); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
-.layer-t h3 { font-size: clamp(22px, 2.2vw, 36px); margin: 2px 0 6px; color: var(--text); }
-.layer-t p { color: var(--muted); margin: 0 0 8px; font-size: clamp(14px, 1.15vw, 18px); }
-.layer-t b { color: var(--lc); }
-.layer .vgrid { grid-template-columns: repeat(2, calc(19vh * 16 / 9)); }
-
 /* 4 The robots. */
 .robots2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5vw; }
 .sims { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; }
@@ -588,17 +572,10 @@ body.deck .nav, body.deck footer { display: none; }
   .vgrid.g5 { grid-template-columns: repeat(2, 1fr); }
   .vgrid.fill { height: auto; }
   .vgrid.fill .vt { aspect-ratio: 16 / 9; }
-  .stack { grid-template-columns: 1fr; }
-  .sys { display: none; }
-  .layer { grid-column: 1; grid-row: auto !important; grid-template-columns: 1fr; }
-  .layer .vgrid { grid-template-columns: repeat(2, 1fr); }
   .robots2, .bars3, .res3, .sims { grid-template-columns: 1fr; }
   .s-over { max-width: 88vw; }
   .s-center { max-width: 100%; min-width: 0; }
   .s-huge, .s-huge.sm { font-size: 8.2vw; }
-  .layer .vt figcaption span { display: none; }
-  .layer .vt figcaption { padding: 18px 8px 6px; }
-  .layer .vt figcaption b { font-size: 11px; }
   .s-stats { gap: 2vh 6vw; }
   .dots { display: none; }
 }
@@ -629,7 +606,14 @@ body.deck .s-cta { display: none; }
 .pyr { position: relative; width: 100%; max-width: 640px; margin: 0 auto; }
 body.deck .pyr { max-width: 80vh; }
 body.deck #s-levels .s-head, body.deck #s-cover .s-head { margin-bottom: 2vh; }
-.lv-list { display: flex; flex-direction: column; gap: 12px; }
+.lv-list { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px 18px; }
+.lv-list .lv-row { grid-column: 2; }
+/* The system a group of levels tests, as a labelled bracket to the left of its rows. */
+.sys { grid-column: 1; border-left: 4px solid var(--l3c); padding: 4px 0 4px 14px; display: flex; flex-direction: column; justify-content: center; }
+.sys.s2 { grid-row: 1 / 3; border-image: linear-gradient(var(--l1c), var(--l2c)) 1; }
+.sys.s1 { grid-row: 3; }
+.sys b { color: var(--text); font-size: clamp(20px, 1.9vw, 30px); font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; }
+.sys span { color: var(--muted); font-size: clamp(13px, 1.1vw, 17px); }
 .lv-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 12px 14px 12px 18px;
   border: 1px solid var(--line); border-left: 4px solid var(--lc); border-radius: 12px; background: var(--card); transition: opacity .2s; }
 .lv-row.l1 { --lc: var(--l1c); } .lv-row.l2 { --lc: var(--l2c); } .lv-row.l3 { --lc: var(--l3c); }
@@ -651,5 +635,7 @@ body.deck #s-cover .lg { padding: 2px; }
 @media (max-width: 860px) {
   .lv-wrap { grid-template-columns: 1fr; }
   .lv-row { grid-template-columns: 1fr; }
+  .lv-list { grid-template-columns: 1fr; }
+  .lv-list .lv-row, .lv-list .sys { grid-column: 1; grid-row: auto; }
   .lv-row .vgrid { grid-template-columns: repeat(2, 1fr); }
 }
