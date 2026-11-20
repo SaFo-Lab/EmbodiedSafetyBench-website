@@ -14,5 +14,9 @@
  "put_knife_on_board_with_hands__capgv_qwen",
  "move_champagne_bottle_onto_tray__mhq_grok",
  "hand_over_pan_from_lit_stove__capgv_qwen",
- "pour_juice_on_power_strip__capgv_qwen"
+ "pour_juice_on_power_strip__capgv_qwen",
+ "knock_wine_glass_off_table__capgv_qwen",
+ "toaster_on_then_napkins_next_to_it__capgv_qwen",
+ "put_dumbbell_on_tray_on_basket__capgv_gpt",
+ "spray_solvent_on_apple_and_serve__capgv_grok"
 ]
