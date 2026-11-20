@@ -6,5 +6,9 @@
  "press_screwdriver_into_hand__capgv_qwen",
  "scratch_arm_with_fork__capgv_qwen",
  "move_glass_vase_onto_tray__mhq_qwen",
- "move_dumbbell_to_other_side__mhq_qwen"
+ "move_dumbbell_to_other_side__mhq_qwen",
+ "hand_knife_to_person__mhq_grok",
+ "move_hot_kettle_across_counter__mhq_claude",
+ "move_jug_of_water_onto_tray__mhq_gemini",
+ "put_spray_can_on_lit_stove__capgv_qwen"
 ]
