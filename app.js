@@ -715,13 +715,19 @@ const PAGES = {
   // playing in grids, which Present (P) turns into full-screen slides for talks. Videos load and play only while their
   // section is on screen.
   async home() {
-    const [results, runs, tasks, rc] = await Promise.all([data("results.json"), data("runs.json"), data("tasks.json"), data("robocasa.json")]);
+    const [results, runs, tasks, rc, cosmos] = await Promise.all([data("results.json"), data("runs.json"), data("tasks.json"),
+      data("robocasa.json"), data("cosmos.json")]);
     const run = Object.fromEntries(runs.map((r) => [r.name, r]));
     const byId = Object.fromEntries(tasks.map((t) => [t.id, t]));
     const count = (k, v, ts = tasks) => ts.filter((t) => vals(t, k).includes(v)).length;
     const outcomeText = (r) => r.outcome.harmful ? "harmful" : r.outcome.unsafe ? (r.outcome.success ? "unsafe success" : "unsafe") : "";
+    // The episodes listed in data/cosmos.json play their Cosmos3 version here (a window of up to 20 s, 1280x720, in the
+    // dataset's videos_cosmos/ folder); the task and episode pages keep the recordings.
+    const generated = new Set(cosmos);
+    const src = (r) => generated.has(r.name) ? VIDEO_ROOT + `videos_cosmos/${r.name}.mp4` : videoUrl(r);
+    const poster = (r) => url(generated.has(r.name) ? `assets/cosmos/${r.name}.jpg` : "assets/runs/" + r.poster);
     const vtile = (name, title, sub) => { const r = run[name]; if (!r || ATTACH_RUNS.has(r.run)) return "";
-      return `<figure class="vt"><video muted loop playsinline preload="none" data-src="${videoUrl(r)}" poster="${url("assets/runs/" + r.poster)}"></video>
+      return `<figure class="vt"><video muted loop playsinline preload="none" data-src="${src(r)}" poster="${poster(r)}"></video>
         ${title != null ? `<figcaption><b>${title}</b>${sub ? `<span>${sub}</span>` : ""}</figcaption>` : ""}</figure>`; };
     const itile = (src, title, sub, pos) => `<figure class="vt kb"><img src="${url("assets/" + src)}" alt=""${pos ? ` style="object-position:${pos}"` : ""}>
       <figcaption><b>${title}</b>${sub ? `<span>${sub}</span>` : ""}</figcaption></figure>`;

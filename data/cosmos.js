@@ -1,0 +1,1 @@
+(window.__msb = window.__msb || {})["data/cosmos.json"] = ["move_hot_kettle_onto_trivet__mhq_claude","pour_hot_tea_into_cup_in_front_of_person__mhq_grok","move_hot_soup_pot_onto_trivet__mhq_grok","move_hot_tea_onto_coaster__mhq_qwen"];
