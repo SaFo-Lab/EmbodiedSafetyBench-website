@@ -1,4 +1,4 @@
-// EmbodiedSafetyBench site. Every page sets <body data-page="..." data-root="."|"..">; this script adds the shared
+// Robot Safety Exam site. Every page sets <body data-page="..." data-root="."|"..">; this script adds the shared
 // navigation and footer and fills the page from the data files. Data files are loaded as small scripts
 // (build_data_js.py wraps each .json), which works over http:// and from a plain file:// open.
 const ROOT = document.body.dataset.root || ".";
@@ -23,6 +23,7 @@ const FACETS = [
 ];
 const vals = (t, k) => (t[k] == null ? [] : Array.isArray(t[k]) ? t[k] : [t[k]]).map(String);
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+const andList = (xs) => (xs.length > 1 ? xs.slice(0, -1).join(", ") + " and " + xs[xs.length - 1] : xs.join(""));
 const label = (k, v) => (k === "level" ? LEVEL_NAMES[v] + " level" : cap(pretty(v)));
 
 // Data loading -----------------------------------------------------------------------------------------------------
@@ -57,13 +58,13 @@ const data = async (f) => {
 const NAV = [["leaderboard/", "Leaderboard", "leaderboard"], ["tasks/", "Tasks", "tasks"], ["demos/", "Episodes", "demos"],
   ["method/", "Method", "method"]];
 document.body.insertAdjacentHTML("afterbegin", `<header class="nav">
-  <a class="brand" href="${url("")}"><span class="logo">⚠</span> EmbodiedSafetyBench</a>
+  <a class="brand" href="${url("")}"><span class="logo">⚠</span> Robot Safety Exam</a>
   <nav>${NAV.map(([h, l, p]) => `<a href="${url(h)}" class="${p === PAGE || (PAGE === "run" && p === "demos") ? "on" : ""}">${l}</a>`).join("")}
 </nav>
   <a class="icon gh" href="https://github.com/SaFo-Lab" target="_blank" rel="noopener" title="GitHub"><svg viewBox="0 0 16 16" width="16" height="16"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.82 1.23.82.72 1.23 1.88.87 2.34.67.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
   <button id="theme" class="icon" title="Switch theme">◐</button></header>`);
 document.body.insertAdjacentHTML("beforeend",
-  `<footer>EmbodiedSafetyBench</footer>
+  `<footer>Robot Safety Exam</footer>
    <dialog id="player"><button class="icon close" id="player-close">✕</button><video id="player-video" controls playsinline></video><p id="player-cap"></p></dialog>
    <div id="drawer-bg"></div><aside id="drawer" aria-hidden="true"><button class="icon close" id="drawer-close">✕</button><div id="drawer-body"></div></aside>`);
 try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
@@ -209,6 +210,9 @@ window.addEventListener("popstate", () => {
 // Leaderboard: per level, agents ranked by the level's headline rate (best first; equal values share a rank), with
 // medals for the top three; and a matrix with every rate of every task type.
 const LV_ORDER = ["instruction", "semantic", "motion"];
+// Runs of the instruction and semantic levels made with attach grasps (the object is fixed to the closed gripper).
+// Demos on the home and overview pages leave them out.
+const ATTACH_RUNS = new Set(["p14v"]);
 const SETTING_NOTES = {
   vision: "The agent sees the scene through its camera images.",
   privileged: "With every message the agent also gets the exact state of the scene, read from the simulator: the pose and size of each object, what it stands on or in, its contents, appliance and door states, the body parts of the person and the gripper. The state holds no hazard labels, rules, metrics or thresholds. The agent names objects as the state names them, and the simulator tells the robot which object a name means. Everything else is the same as in the vision setting.",
@@ -278,7 +282,10 @@ const fmtT = (s) => (s == null ? "–" : s >= 60 ? `${Math.floor(s / 60)}:${Stri
 // time. Drag to turn; a dot shows its task and opens it on click.
 const PALETTE = ["#4c6ef5", "#e8590c", "#12b886", "#d6336c", "#f59f00", "#7950f2", "#15aabf", "#82c91e", "#fd7e14", "#be4bdb", "#868e96", "#20c997"];
 const LEVEL_COLOR = { instruction: "#c2255c", semantic: "#e67700", motion: "#1971c2" };
-function taskPyramid(tasks) {
+// An inverted pyramid of the tasks inside root: one layer per safety level, apex at the bottom. The colour-by panel is
+// drawn only when root holds .cb-grid and .legend. Returns setters for the highlighted value and the colour dimension.
+function taskPyramid(tasks, root, start = "level") {
+  const grid = root.querySelector(".cb-grid"), legend = root.querySelector(".legend");
   const DIMS = [["level", "safety levels"], ["robot", "robots"], ["risk", "risk categories"], ["target", "harm targets"], ["dimension", "motion dimensions"],
     ["action", "actions"], ["objects", "object types"], ["person", "person settings"]];
   const groups = Object.fromEntries(DIMS.map(([k]) => {
@@ -288,18 +295,19 @@ function taskPyramid(tasks) {
     const color = Object.fromEntries(order.map((v, i) => [v, k === "level" ? LEVEL_COLOR[v] : PALETTE[i % PALETTE.length]]));
     return [k, { counts: c, order, color }];
   }));
-  let dim = "level", focus = null;
+  let dim = start, focus = null;
   const colorOf = (t) => { const v = vals(t, dim)[0]; return v ? groups[dim].color[v] : "#ced4da"; };
   const bar = (k) => { const g = groups[k], n = g.order.reduce((s, v) => s + g.counts[v], 0);
     return `<span class="cbar">${g.order.map((v) => `<i style="flex:${g.counts[v] / n};background:${g.color[v]}"></i>`).join("")}</span>`; };
   const renderPanel = () => {
-    $("#cb-grid").innerHTML = DIMS.map(([k, name]) => `<button class="cb ${k === dim ? "on" : ""}" data-k="${k}"><b>${groups[k].order.length}</b><span>${name}</span>${bar(k)}</button>`).join("");
+    if (!grid) return;
+    grid.innerHTML = DIMS.map(([k, name]) => `<button class="cb ${k === dim ? "on" : ""}" data-k="${k}"><b>${groups[k].order.length}</b><span>${name}</span>${bar(k)}</button>`).join("");
     const g = groups[dim], max = Math.max(...g.order.map((v) => g.counts[v]));
     const others = tasks.length - g.order.reduce((s, v) => s + g.counts[v], 0);
-    $("#legend").innerHTML = g.order.map((v) => `<a class="lg" data-v="${v}" href="tasks/?${dim}=${encodeURIComponent(v)}"><i style="background:${g.color[v]}"></i><span>${label(dim, v)}</span><u style="width:${60 * g.counts[v] / max}px;background:${g.color[v]}"></u><b>${g.counts[v]}</b></a>`).join("") +
+    legend.innerHTML = g.order.map((v) => `<a class="lg" data-v="${v}" href="${url("tasks/")}?${dim}=${encodeURIComponent(v)}"><i style="background:${g.color[v]}"></i><span>${label(dim, v)}</span><u style="width:${60 * g.counts[v] / max}px;background:${g.color[v]}"></u><b>${g.counts[v]}</b></a>`).join("") +
       (others ? `<p class="lg-note">${others} tasks have no ${DIMS.find((d) => d[0] === dim)[1].replace(/s$/, "")} and stay grey.</p>` : "");
-    $("#cb-grid").querySelectorAll(".cb").forEach((b) => { b.onclick = () => { dim = b.dataset.k; focus = null; renderPanel(); }; });
-    $("#legend").querySelectorAll(".lg").forEach((a) => { a.onmouseenter = () => { focus = a.dataset.v; }; a.onmouseleave = () => { focus = null; }; });
+    grid.querySelectorAll(".cb").forEach((b) => { b.onclick = () => { dim = b.dataset.k; focus = null; renderPanel(); }; });
+    legend.querySelectorAll(".lg").forEach((a) => { a.onmouseenter = () => { focus = a.dataset.v; }; a.onmouseleave = () => { focus = null; }; });
   };
   renderPanel();
 
@@ -325,7 +333,7 @@ function taskPyramid(tasks) {
     });
   }
 
-  const canvas = $("#globe"), ctx = canvas.getContext("2d"), tip = $("#tip");
+  const canvas = root.querySelector(".pyr-canvas"), ctx = canvas.getContext("2d"), tip = root.querySelector(".pyr-tip");
   let yaw = 0.5, drag = null, hover = null, W = 0, H = 0, S = 0;
   const PITCH = 0.30;
   const resize = () => {
@@ -342,7 +350,7 @@ function taskPyramid(tasks) {
     const y2 = cp * y + sp * z1, z2 = -sp * y + cp * z1;
     return [W * 0.4 + S * x1, H * 0.5 - S * y2, z2];
   };
-  const dark = () => document.documentElement.dataset.theme === "dark" || (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+  const dark = () => document.body.matches(".deck, .story") || document.documentElement.dataset.theme === "dark" || (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
   const hexA = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
   const draw = () => {
     ctx.clearRect(0, 0, W, H);
@@ -366,11 +374,11 @@ function taskPyramid(tasks) {
     const pts = [];
     for (const it of items) {
       if (it.kind === "face") {
-        const front = it.depth > -0.05;
+        const front = it.depth > -0.05, off = focus && dim === "level" && it.lv !== focus ? 0.3 : 1;
         ctx.beginPath(); it.quad.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath();
-        ctx.fillStyle = hexA(it.col, it.top ? 0.10 : front ? 0.07 : 0.04);
+        ctx.fillStyle = hexA(it.col, off * (it.top ? 0.10 : front ? 0.07 : 0.04));
         ctx.fill();
-        ctx.strokeStyle = hexA(it.col, front ? 0.55 : 0.22); ctx.lineWidth = front ? 1.3 : 1; ctx.stroke();
+        ctx.strokeStyle = hexA(it.col, off * (front ? 0.55 : 0.22)); ctx.lineWidth = front ? 1.3 : 1; ctx.stroke();
       } else {
         const v = vals(it.t, dim)[0], faded = focus && v !== focus;
         const front = Math.max(0, Math.min(1, (it.depth + 1) / 2));
@@ -394,8 +402,8 @@ function taskPyramid(tasks) {
       ctx.font = "600 13px Inter, sans-serif";
     }
     ctx.fillStyle = dark() ? "#9aa3b2" : "#5d6573"; ctx.font = "12px Inter, sans-serif";
-    ctx.fillText("What to do (System 2)", W - 150, project([0, 1.15, 0])[1] - 46);
-    ctx.fillText("How to move (System 1)", W - 150, project([0, APEX, 0])[1] + 6);
+    ctx.fillText("System 2, task decisions", W - 150, project([0, 1.15, 0])[1] - 46);
+    ctx.fillText("System 1, motion", W - 150, project([0, APEX, 0])[1] + 6);
     canvas._pts = pts;
   };
   const loop = () => { if (!drag && !hover) yaw += 0.003; draw(); requestAnimationFrame(loop); };
@@ -427,6 +435,7 @@ function taskPyramid(tasks) {
     if (!moved) { const [p] = pick(e); if (p) location.href = taskUrl(p.t.id); }
   };
   canvas.onpointerleave = () => { hover = null; tip.style.opacity = 0; };
+  return { focus: (v) => { focus = v; }, colourBy: (k) => { dim = k; focus = null; renderPanel(); } };
 }
 
 
@@ -509,66 +518,6 @@ window.addEventListener("scroll", () => {
 
 // Pages ------------------------------------------------------------------------------------------------------------
 const PAGES = {
-  async home() {
-    const [results, runs, tasks] = await Promise.all([data("results.json"), data("runs.json"), data("tasks.json")]);
-    const byId = Object.fromEntries(tasks.map((t) => [t.id, t]));
-    const count = (lv) => tasks.filter((t) => t.level === lv).length;
-    const risks = new Set(tasks.flatMap((t) => vals(t, "risk"))).size;
-    const objects = new Set(tasks.flatMap((t) => vals(t, "objects"))).size;
-    $("#stats").innerHTML = [[tasks.length, "tasks"], [3, "safety levels"], [2, "robots"], [risks, "risk categories"],
-      [objects, "object categories"]].map(([n, l]) => `<b>${n}</b> ${l}`).join('<i>·</i>');
-    $("#hsearch").placeholder = `Search ${tasks.length} tasks`;
-    // Tilted wall of scene thumbnails behind the hero text.
-    const thumbs = tasks.filter((t) => t.thumb).map((t) => t.thumb);
-    $("#wall").innerHTML = `<div class="wall-grid">${Array.from({ length: 48 }, (_, k) => `<img src="${url("assets/" + thumbs[(k * 7) % thumbs.length])}" alt="">`).join("")}</div>`;
-    // An episode to play for a task: an unsafe or harmful one when there is one.
-    const bad = (r) => r.outcome.unsafe || r.outcome.harmful ? 1 : 0;
-    const episodeOf = (id) => runs.filter((r) => r.task === id).sort((x, y) => bad(y) - bad(x) || y.final - x.final)[0];
-    const playIn = (el, r, before) => { if (!r || el.querySelector("video")) return; const v = document.createElement("video");
-      Object.assign(v, { src: videoUrl(r), muted: true, loop: true, playsInline: true, autoplay: true });
-      if (before) before.replaceWith(v); else el.appendChild(v); v.play().catch(() => {}); };
-    // Mosaic of the tasks in their evaluation scenes; a few tiles play a recorded episode of their task.
-    const pool = LV_ORDER.map((lv) => tasks.filter((t) => t.level === lv && t.thumb && t.robot !== "G1"));
-    // Every third motion tile is a G1 task.
-    tasks.filter((t) => t.robot === "G1" && t.thumb).forEach((t, k) => pool[2].splice(3 * k + 2, 0, t));
-    const order = []; for (let k = 0; order.length < tasks.length && k < tasks.length; k++) pool.forEach((p) => { if (p[k]) order.push(p[k]); });
-    const tiles = order.slice(0, 84);
-    $("#mosaic").innerHTML = `<div class="mosaic-grid">${tiles.map((t, k) => `<a class="tile" href="${taskUrl(t.id)}" data-k="${k}" style="--t:${k * 14}ms">
-      <img src="${url("assets/" + t.thumb)}" alt=""><span class="tl ${LEVEL_TAG[t.level]}">${LEVEL_NAMES[t.level]}${t.robot === "G1" ? " · G1" : ""}</span></a>`).join("")}</div>
-      <div class="mosaic-cap"><b>${tasks.length} tasks</b><span>A tile is one task in its scene. Point at a tile of a Franka task to play a recording of it, click a tile to open the task.</span><a href="tasks/">All tasks →</a></div>`;
-    $("#mosaic").querySelectorAll(".tile").forEach((el) => { const t = tiles[+el.dataset.k]; el.onmouseenter = () => playIn(el, episodeOf(t.id)); });
-    [5, 22, 38, 51, 67].forEach((k) => { const el = $(`#mosaic .tile[data-k="${k}"]`); if (el) playIn(el, episodeOf(tiles[k].id)); });
-    tabs($("#lb-tabs"), LV_ORDER.map((lv) => [lv, `${LEVEL_NAMES[lv]} level`]), (lv) => rankBoard(results, lv, $("#lb-body"), true));
-    // The robots: the Franka, and the G1 by the rooms it walks through.
-    const inScene = (s) => tasks.filter((t) => t.robot === "G1" && t.scene === s);
-    const G1_SCENES = [["Hospital corridor", "carry_box_to_end_of_hallway", "A person on the way, two people beside it, a switched-on space heater on the way."],
-      ["Office hall", "carry_box_to_table_past_floor_vase", "A person on the way, a kettle taken from a lit stove, a ceramic floor vase."],
-      ["Kitchen", "carry_pot_of_hot_soup_to_stove", "Knives, scissors, hot pots and kettles carried to the counter, the stove or a dining table."]];
-    const franka = tasks.filter((t) => t.robot === "Franka");
-    $("#robots").innerHTML = `<a class="robot-card" href="tasks/?robot=Franka"><img loading="lazy" src="${url("assets/thumbs/move_hot_kettle_onto_trivet.jpg")}" alt="">
-        <div><span class="chip strong">Franka</span><h3>At a table or a counter</h3><p>An arm next to a seated or standing person, at all three levels.</p><b>${franka.length} tasks →</b></div></a>` +
-      G1_SCENES.map(([s, id, text]) => `<a class="robot-card" href="tasks/?robot=G1&scene=${encodeURIComponent(s)}"><img loading="lazy" src="${url("assets/thumbs/" + id + ".jpg")}" alt="">
-        <div><span class="chip strong">G1</span><h3>${s}</h3><p>${text}</p><b>${inScene(s).length} tasks →</b></div></a>`).join("");
-    for (const lv of ["instruction", "semantic", "motion"]) $(`#count-${lv}`).textContent = `${count(lv)} tasks →`;
-    $("#div-num").textContent = tasks.length;
-    taskPyramid(tasks);
-    // Example tasks per level, each with the episode its card plays: ones whose harm or unsafe motion shows clearly in
-    // the recording, checked by eye.
-    const FEATURED = {
-      instruction: ["hit_arm_with_wrench__p14v_qwen", "put_spray_can_on_lit_stove__capgv_qwen"],
-      semantic: ["put_phone_into_bowl_of_water__p14v_claude", "put_knife_on_board_with_hands__capgv_qwen"],
-      motion: ["move_hot_kettle_onto_trivet__b4e1_qwen", "move_knife_to_other_end__b4e1_qwen",
-        "put_dumbbell_into_basket__b4e1_claude", "place_scissors_in_front_of_person__b4e1_gemini"],
-    };
-    const shown = {};
-    for (const lv of LV_ORDER) {
-      const picks = (FEATURED[lv] || []).map((n) => runs.find((r) => r.name === n)).filter((r) => r && byId[r.task]);
-      (picks.length ? picks : tasks.filter((t) => t.level === lv).map((t) => episodeOf(t.id)).filter(Boolean).slice(0, 2))
-        .forEach((r) => { shown[r.task] = r; $("#example-grid").insertAdjacentHTML("beforeend", taskCard(byId[r.task])); });
-    }
-    $("#example-grid").querySelectorAll(".task").forEach((el) => { el.onmouseenter = () => playIn(el, shown[el.dataset.task], el.querySelector("img")); });
-  },
-
   // Two settings: the agent sees the camera images (vision), or also gets the exact state of the scene (privileged).
   async leaderboard() {
     const all = { vision: await data("results.json"), privileged: await data("results_privileged.json") };
@@ -695,7 +644,7 @@ const PAGES = {
     if (!r) { $("#run-main").innerHTML = `<p>Unknown episode: ${esc(name)}. <a href="${url("demos/")}">All episodes</a></p>`; return; }
     const t = tasks.find((x) => x.id === r.task) || { instruction: r.task, id: r.task };
     const tr = await load("assets/runs/" + r.traj);
-    document.title = `${t.instruction} · ${MODEL_NAMES[r.model]} · EmbodiedSafetyBench`;
+    document.title = `${t.instruction} · ${MODEL_NAMES[r.model]} · Robot Safety Exam`;
     const [v, cls] = verdict(r);
     const others = runs.filter((x) => x.task === r.task).sort((a, b) => a.model.localeCompare(b.model) || b.final - a.final || a.episode - b.episode);
     const turns = tr.turns || [];
@@ -757,6 +706,169 @@ const PAGES = {
   },
 
   async method() {},
+
+  // The home page: the overview as page sections on a black background, one message per section with recorded episodes
+  // playing in grids, which Present (P) turns into full-screen slides for talks. Videos load and play only while their
+  // section is on screen.
+  async home() {
+    const [results, runs, tasks, rc] = await Promise.all([data("results.json"), data("runs.json"), data("tasks.json"), data("robocasa.json")]);
+    const run = Object.fromEntries(runs.map((r) => [r.name, r]));
+    const byId = Object.fromEntries(tasks.map((t) => [t.id, t]));
+    const count = (k, v, ts = tasks) => ts.filter((t) => vals(t, k).includes(v)).length;
+    const outcomeText = (r) => r.outcome.harmful ? "harmful" : r.outcome.unsafe ? (r.outcome.success ? "unsafe success" : "unsafe") : "";
+    const vtile = (name, title, sub) => { const r = run[name]; if (!r || ATTACH_RUNS.has(r.run)) return "";
+      return `<figure class="vt"><video muted loop playsinline preload="none" data-src="${videoUrl(r)}" poster="${url("assets/runs/" + r.poster)}"></video>
+        ${title != null ? `<figcaption><b>${title}</b>${sub ? `<span>${sub}</span>` : ""}</figcaption>` : ""}</figure>`; };
+    const itile = (src, title, sub, pos) => `<figure class="vt kb"><img src="${url("assets/" + src)}" alt=""${pos ? ` style="object-position:${pos}"` : ""}>
+      <figcaption><b>${title}</b>${sub ? `<span>${sub}</span>` : ""}</figcaption></figure>`;
+    const epCap = (name) => { const r = run[name], t = byId[r.task];
+      return `${esc(t.instruction)} <span>${MODEL_NAMES[r.model]} · ${outcomeText(r)}</span>`; };
+    // Episodes whose harm or unsafe motion shows in the recording, checked by eye on frames from each one. All of them
+    // grasp physically: the motion level reruns at 2560x1440 (mhq) and the capgv runs of the instruction and semantic
+    // levels, never the attach-grasp p14v runs; a capgv recording is 2560x1440 once it has been recorded again. The
+    // breakage tasks have no physical grasp episode, so their tile shows the task's scene.
+    const RISK_EP = {
+      "cuts and stabs": "hand_knife_to_person__mhq_grok", burns: "move_hot_kettle_across_counter__mhq_claude",
+      "liquid on electronics": "pour_juice_on_power_strip__capgv_qwen", fire: "toaster_on_then_napkins_next_to_it__capgv_qwen",
+      impact: "move_jug_of_water_onto_tray__mhq_gemini", "knocking objects over": "knock_wine_glass_off_table__capgv_qwen",
+      "explosion and misuse of appliances": "put_spray_can_on_lit_stove__capgv_qwen", "poisoning and contaminated food": "spray_solvent_on_apple_and_serve__capgv_grok",
+      "falling objects": "put_dumbbell_on_tray_on_basket__capgv_gpt", breakage: null,
+    };
+    const RISK_SCENE = { breakage: "put_hammer_on_tray_of_glasses" };
+    const HARM_EP = "move_hot_kettle_onto_trivet__mhq_claude";
+    const LEVEL_EP = {
+      instruction: ["scratch_arm_with_fork__capgv_qwen", "press_screwdriver_into_hand__capgv_qwen"],
+      semantic: ["put_knife_on_board_with_hands__capgv_qwen", "hand_over_pan_from_lit_stove__capgv_qwen"],
+      motion: ["move_glass_vase_onto_tray__mhq_qwen", "move_dumbbell_to_other_side__mhq_qwen"],
+    };
+    const DIM_EP = [["trajectory", "move_hot_tea_onto_coaster__mhq_qwen", "The path of the carried object"],
+      ["speed", "move_hot_soup_pot_onto_trivet__mhq_grok", "The speed of the carried object near a person"],
+      ["orientation", "pour_hot_tea_into_cup_in_front_of_person__mhq_grok", "The direction of a blade or a spout"]];
+    const ROBOT_EP = "move_champagne_bottle_onto_tray__mhq_grok";
+    // The title wall starts with the 2560x1440 recordings.
+    const WALL = [HARM_EP, ...DIM_EP.map((d) => d[1]), ...LEVEL_EP.motion, ...LEVEL_EP.instruction, RISK_EP["cuts and stabs"], RISK_EP.burns,
+      RISK_EP.impact, RISK_EP["explosion and misuse of appliances"], ROBOT_EP, ...LEVEL_EP.semantic, ...Object.values(RISK_EP)]
+      .filter((n, i, a) => run[n] && a.indexOf(n) === i).slice(0, 16);
+
+    // 1 Title.
+    const franka = tasks.filter((t) => t.robot === "Franka"), g1 = tasks.filter((t) => t.robot === "G1");
+    const risks = Object.keys(RISK_EP).filter((k) => count("risk", k)).sort((a, b) => count("risk", b) - count("risk", a));
+    $("#title-wall").innerHTML = WALL.map((n) => vtile(n)).join("");
+    // Tasks of both simulators: the Isaac Lab Arena tasks, and the RoboCasa scenes in each of their instruction wordings.
+    const rcTasks = rc.scenes.length * rc.wordings.length;
+    $("#title-stats").innerHTML = [[tasks.length + rcTasks, "tasks"], [2, "simulators"], [3, "robots"], [3, "safety levels"]]
+      .map(([n, l]) => `<div><b>${n}</b><span>${l}</span></div>`).join("");
+    // 2 One unsafe episode, full screen.
+    $("#harm-video").innerHTML = vtile(HARM_EP);
+    $("#harm-cap").innerHTML = epCap(HARM_EP);
+    // 3 The three levels: the inverted pyramid beside one row per level (#lv-list), or a stack of boxes (#levels).
+    const LV_TEXT = { instruction: "The instruction asks for harm.", semantic: "A benign instruction in a scene with a hazard.",
+      motion: "A benign task whose default motion is unsafe." };
+    if ($("#lv-list")) {
+      const pyr = taskPyramid(tasks, $("#s-levels"));
+      $("#lv-list").innerHTML = LV_ORDER.map((lv, i) => `<div class="lv-row ${LEVEL_TAG[lv]}" data-lv="${lv}"><div>
+        <i>Level ${i + 1} · ${lv === "motion" ? "System 1" : "System 2"}</i><h3>${LEVEL_NAMES[lv]}</h3>
+        <p>${LV_TEXT[lv]}</p><b>${tasks.filter((t) => t.level === lv).length} tasks</b></div>
+        <div class="vgrid g2">${LEVEL_EP[lv].map((n) => vtile(n)).join("")}</div></div>`).join("");
+      const rows = [...$("#lv-list").children];
+      rows.forEach((row) => {
+        row.onmouseenter = () => { pyr.focus(row.dataset.lv); rows.forEach((r) => r.classList.toggle("dim", r !== row)); };
+        row.onmouseleave = () => { pyr.focus(null); rows.forEach((r) => r.classList.remove("dim")); };
+      });
+    }
+    if ($("#s-cover")) taskPyramid(tasks, $("#s-cover"), "risk");
+    if ($("#levels")) $("#levels").innerHTML = `<div class="sys s2"><b>System 2</b><span>what to do</span></div><div class="sys s1"><b>System 1</b><span>how to move</span></div>` +
+      LV_ORDER.map((lv, i) => `<div class="layer ${LEVEL_TAG[lv]}" style="grid-row:${i + 1}"><div class="layer-t"><i>Level ${i + 1}</i><h3>${LEVEL_NAMES[lv]}</h3>
+        <p>${LV_TEXT[lv]}</p><b>${tasks.filter((t) => t.level === lv).length} tasks</b></div>
+        <div class="vgrid g2">${LEVEL_EP[lv].map((n) => vtile(n, esc(byId[run[n].task].instruction), `${MODEL_NAMES[run[n].model]} · ${outcomeText(run[n])}`)).join("")}</div></div>`).join("");
+    // 4 The two simulators. RoboCasa shows scene images only: its episodes are not on this site.
+    const tally = (k) => { const c = {}; rc.scenes.forEach((s) => { c[s[k]] = (c[s[k]] || 0) + 1; }); return Object.entries(c).sort((a, b) => b[1] - a[1]); };
+    const chips = (pairs) => `<div class="sim-chips">${pairs.map(([v, n]) => `<span>${cap(v)} <b>${n}</b></span>`).join("")}</div>`;
+    $("#sims").innerHTML = `<div class="sim"><div class="vgrid g2">${itile(byId.hand_knife_to_person.thumb, "Franka arm", "")}${itile(byId.carry_pot_of_hot_soup_to_stove.thumb, "Unitree G1", "")}</div>
+        <h3>Isaac Lab Arena</h3><p class="sim-eng">Isaac Sim with PhysX</p>
+        <ul><li><b>${tasks.length}</b> tasks at three safety levels</li><li>Franka arm and Unitree G1 humanoid</li>
+        <li>${results.models.length} vision-language model agents on the leaderboard</li></ul>${chips(Object.entries({ "instruction level": count("level", "instruction"), "semantic level": count("level", "semantic"), "motion level": count("level", "motion") }))}</div>
+      <div class="sim"><div class="vgrid g2">${rc.images.slice(2, 4).map(([src, cap_]) => itile(src, cap_, "")).join("")}</div>
+        <h3>${rc.simulator}</h3><p class="sim-eng">${cap(rc.engine)}</p>
+        <ul><li><b>${rcTasks}</b> tasks at the motion level, from ${rc.scenes.length} kitchen scenes in ${rc.wordings.length} instruction wordings</li>
+        <li>${rc.robot}</li><li>${andList(rc.agents.vla)} zero shot, and code-as-policies agents with ${andList(rc.agents.cap)}</li></ul>${chips(tally("risk"))}</div>`;
+    // 5 The robots.
+    const G1_SCENES = [["Hospital corridor", "carry_box_to_end_of_hallway"], ["Office hall", "carry_box_to_table_past_floor_vase"], ["Kitchen", "carry_pot_of_hot_soup_to_stove"]];
+    $("#robots2").innerHTML = `<div class="rb"><div class="vgrid g1">${vtile(ROBOT_EP)}</div>
+        <h3>Franka arm</h3><p>A single arm at a table, next to a seated or standing person</p><b>${franka.length} tasks · all three levels · Isaac Lab Arena</b></div>
+      <div class="rb"><div class="vgrid g3">${G1_SCENES.map(([s, id]) => itile(byId[id].thumb, s, `${count("scene", s, g1)} tasks`)).join("")}</div>
+        <h3>Unitree G1 humanoid</h3><p>Walks through a room carrying an object, past people or hazards</p><b>${g1.length} tasks · motion level · Isaac Lab Arena</b></div>
+      <div class="rb"><div class="vgrid g1">${itile(rc.images[0][0], rc.images[0][1], "", "50% 10%")}</div>
+        <h3>Franka on a mobile base</h3><p>Carries objects along a kitchen counter, past people, a power strip or a heat source</p><b>${rcTasks} tasks · motion level · RoboCasa</b></div>`;
+    // 5 Risk categories, one recorded episode each.
+    $("#risk-n").textContent = risks.length;
+    $("#risk-grid").innerHTML = risks.map((k) => RISK_EP[k] ? vtile(RISK_EP[k], cap(k), `${count("risk", k)} tasks`)
+      : itile(byId[RISK_SCENE[k]].thumb, cap(k), `${count("risk", k)} tasks`)).join("");
+    // 6 Harm targets, people and objects, as bar lists.
+    const barList = (k, title) => { const c = {}; tasks.forEach((t) => vals(t, k).forEach((v) => { c[v] = (c[v] || 0) + 1; }));
+      const order = Object.keys(c).sort((a, b) => c[b] - c[a]), max = c[order[0]];
+      return `<div class="bl"><h3>${title}</h3>${order.map((v, i) => `<div class="bl-row"><span>${label(k, v)}</span><i style="--w:${c[v] / max};--c:${PALETTE[i % PALETTE.length]}"></i><b>${c[v]}</b></div>`).join("")}</div>`; };
+    $("#bars3").innerHTML = barList("target", "Harm target") + barList("person", "People in the scene") + barList("objects", "Objects");
+    // 7 Motion dimensions.
+    $("#dim-grid").innerHTML = DIM_EP.map(([d, n, text]) => vtile(n, cap(d), `${text} · ${count("dimension", d)} tasks`)).join("");
+    // 8 Coverage matrix: risk category by level, the motion level split by robot.
+    const COLS = [["Instruction", "instruction", "Franka"], ["Semantic", "semantic", "Franka"], ["Motion · Franka", "motion", "Franka"], ["Motion · G1", "motion", "G1"]];
+    const cell = (k, lv, rb) => tasks.filter((t) => t.level === lv && t.robot === rb && vals(t, "risk").includes(k)).length;
+    const cmax = Math.max(...risks.flatMap((k) => COLS.map(([, lv, rb]) => cell(k, lv, rb))));
+    $("#cov").innerHTML = `<table><thead><tr><th></th>${COLS.map(([h, lv]) => `<th class="${LEVEL_TAG[lv]}">${h}</th>`).join("")}<th>All</th></tr></thead><tbody>${
+      risks.map((k) => `<tr><td class="cov-k">${cap(k)}</td>${COLS.map(([, lv, rb]) => { const n = cell(k, lv, rb);
+        return `<td>${n ? `<a class="${LEVEL_TAG[lv]}" href="${url(`tasks/?risk=${encodeURIComponent(k)}&level=${lv}&robot=${rb}`)}" style="--s:${Math.sqrt(n / cmax)}"><b>${n}</b></a>` : `<span class="nil">·</span>`}</td>`; }).join("")}
+        <td class="cov-all">${count("risk", k)}</td></tr>`).join("")}</tbody></table>`;
+    // 9 Results: the leaderboard metric of each level.
+    const R = results.ranking, best = Math.max(...Object.values(R.motion.rows).map((x) => x.value));
+    $("#res-head").textContent = `Safe success at the motion level is at most ${best}%`;
+    $("#res3").innerHTML = LV_ORDER.map((lv) => { const g = R[lv], rows = Object.entries(g.rows).sort((a, b) => b[1].value - a[1].value);
+      return `<div class="rp ${LEVEL_TAG[lv]}"><h3>${LEVEL_NAMES[lv]} level</h3><p>${g.metric}</p>${rows.map(([m, x]) => `<div class="rp-row"><span>${MODEL_NAMES[m]}</span>
+        <i style="--w:${x.value / 100}"></i><b>${x.value}%</b></div>`).join("")}</div>`; }).join("");
+
+    // Slide mechanics: videos play while their section is on screen. P or the Present button turns the sections into
+    // full-screen slides, where keys and dots move between them; Esc, the Exit button or the end of full screen leaves
+    // them. The pyramids measure their width again after each switch.
+    const setPresent = (on) => {
+      const mid = scrollY + innerHeight * 0.4;
+      const keep = slides.find((x) => x.offsetTop <= mid && mid < x.offsetTop + x.offsetHeight) || slides[current];
+      document.body.classList.toggle("deck", on); document.documentElement.classList.toggle("deck-html", on);
+      window.dispatchEvent(new Event("resize"));
+      keep.scrollIntoView();
+      if (on && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    };
+    document.body.insertAdjacentHTML("afterbegin", `<button class="deck-exit">Exit presentation · Esc</button>`);
+    $(".deck-exit").onclick = () => setPresent(false);
+    document.querySelectorAll("[data-present]").forEach((b) => { b.onclick = () => setPresent(true); });
+    document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("deck")) setPresent(false); });
+    const slides = [...document.querySelectorAll(".slide")];
+    $("#dots").innerHTML = slides.map((s, i) => `<a href="#${s.id}" title="${i + 1}"></a>`).join("");
+    const dots = [...$("#dots").children];
+    let current = 0;
+    // A section counts as shown when more than half of a slide, or a fifth of a page section, is on screen.
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+      const vs = e.target.querySelectorAll("video[data-src]");
+      if (e.intersectionRatio >= (document.body.classList.contains("deck") ? 0.55 : 0.2)) {
+        current = slides.indexOf(e.target); dots.forEach((d, i) => d.classList.toggle("on", i === current));
+        vs.forEach((v) => { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); });
+        e.target.dispatchEvent(new Event("slide-enter"));
+      } else e.target.querySelectorAll("video").forEach((v) => v.pause());
+    }), { threshold: [0, 0.2, 0.55] });
+    slides.forEach((s) => io.observe(s));
+    const go = (i) => slides[Math.max(0, Math.min(slides.length - 1, i))].scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" });
+    document.addEventListener("keydown", (e) => {
+      if (e.target.closest?.("input, textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
+      const k = e.key;
+      if (!document.body.classList.contains("deck")) { if (k === "p" || k === "P") { e.preventDefault(); setPresent(true); } return; }
+      if (k === "Escape" || k === "p" || k === "P") { e.preventDefault(); setPresent(false); }
+      else if (["ArrowDown", "ArrowRight", "PageDown", " "].includes(k)) { e.preventDefault(); go(current + 1); }
+      else if (["ArrowUp", "ArrowLeft", "PageUp"].includes(k)) { e.preventDefault(); go(current - 1); }
+      else if (k === "Home") { e.preventDefault(); go(0); }
+      else if (k === "End") { e.preventDefault(); go(slides.length - 1); }
+      else if (k === "f" || k === "F") { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); }
+    });
+  },
 };
 
 (PAGES[PAGE] || (async () => {}))().then(() => animate()).catch((e) => {

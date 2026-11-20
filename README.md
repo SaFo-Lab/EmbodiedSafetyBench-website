@@ -1,4 +1,4 @@
-# EmbodiedSafetyBench website
+# Robot Safety Exam website
 
 Static multi-page site, no build step: `index.html` (overview), `leaderboard/`, `tasks/` (filters over the task
 taxonomy; `tasks/?task=<task id>` opens the card of one task), `demos/` (every recorded episode), `run/?r=<episode>`
