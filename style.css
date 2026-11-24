@@ -136,6 +136,13 @@ code { font-family: "JetBrains Mono", monospace; font-size: 13px; }
 .clear { border: none; background: none; color: var(--accent); cursor: pointer; font: inherit; font-size: 13px; }
 .filters .count { color: var(--muted); font-size: 14px; align-self: center; }
 .chip.risk { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); color: var(--accent); }
+.ri { fill: currentColor; }
+.ri .s { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ri .k { fill: none; stroke: var(--ri-bg, var(--bg)); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.chip .ri, .frow .ri, .cov-k .ri { width: 1.2em; height: 1.2em; vertical-align: -.22em; margin-right: .4em; }
+.card .chip .ri { --ri-bg: var(--card); }
+.rsign > path { fill: #ffd43b; stroke: #16181d; stroke-width: 2.6; stroke-linejoin: round; }
+.rsign .ri { color: #16181d; --ri-bg: #ffd43b; }
 .taxgrid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .tax h4 { margin: 0 0 10px; display: flex; justify-content: space-between; }
 .tax h4 span { color: var(--muted); font-weight: 500; font-size: 13px; }
@@ -270,8 +277,10 @@ pre.code { background: #0f1115; color: #e9ecef; border-radius: 10px; padding: 12
 .cbar { display: flex; height: 4px; border-radius: 2px; overflow: hidden; margin-top: 8px; gap: 1px; }
 .cbar i { display: block; }
 .legend { margin-top: 14px; }
-.lg { display: grid; grid-template-columns: 12px 1fr 64px 28px; gap: 8px; align-items: center; padding: 4px 2px; text-decoration: none; font-size: 13px; }
+.lg { display: grid; grid-template-columns: 16px 1fr 64px 28px; gap: 8px; align-items: center; padding: 4px 2px; text-decoration: none; font-size: 13px; }
 .lg i { width: 10px; height: 10px; border-radius: 50%; }
+.lg i.lg-ri { width: 16px; height: 16px; border-radius: 0; }
+.lg-ri .ri { display: block; width: 16px; height: 16px; }
 .lg u { height: 3px; border-radius: 2px; text-decoration: none; opacity: .8; }
 .lg b { color: var(--muted); font-weight: 500; text-align: right; }
 .lg:hover span { color: var(--accent); }
@@ -534,6 +543,14 @@ body.deck .nav, body.deck footer { display: none; }
 .bl-row i::before { content: ""; position: absolute; inset: 0 auto 0 0; width: calc(var(--w) * 100%); border-radius: 99px; background: var(--c); }
 .bl-row b { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
 
+/* 5 Risk categories: the hazard sign of each category over its episode, with the hazard in that episode. */
+.rgrid figcaption { padding-top: 48px; background: linear-gradient(transparent, rgba(0, 0, 0, .62) 38%, rgba(0, 0, 0, .9)); }
+.rgrid figcaption b { display: flex; align-items: center; gap: 10px; }
+.rgrid figcaption b span { color: #fff; font-size: clamp(15px, 1.3vw, 22px); line-height: 1.2; }
+.rgrid .rsign { flex: none; width: clamp(42px, 3.6vw, 64px); filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .55)); }
+.rgrid figcaption > span { display: block; margin-top: 7px; color: #e9ecef; font-size: clamp(12px, .9vw, 15px); line-height: 1.35; }
+.rgrid figcaption > span i { display: block; margin-top: 3px; font-style: normal; color: #adb5bd; font-size: clamp(11px, .8vw, 13px); }
+
 /* 8 Coverage matrix. */
 .cov { overflow-x: auto; }
 .cov table { width: 100%; border-collapse: collapse; }
@@ -572,6 +589,12 @@ body.deck .nav, body.deck footer { display: none; }
   .vgrid.g5 { grid-template-columns: repeat(2, 1fr); }
   .vgrid.fill { height: auto; }
   .vgrid.fill .vt { aspect-ratio: 16 / 9; }
+  .rgrid .vt, body.story:not(.deck) .rgrid .vt { aspect-ratio: 3 / 4; }
+  .rgrid figcaption { padding: 30px 9px 8px; }
+  .rgrid figcaption b { gap: 7px; }
+  .rgrid .rsign { width: 30px; }
+  .rgrid figcaption b span { font-size: 14px; }
+  .rgrid figcaption > span { margin-top: 4px; font-size: 12px; }
   .robots2, .bars3, .res3, .sims { grid-template-columns: 1fr; }
   .s-over { max-width: 88vw; }
   .s-center { max-width: 100%; min-width: 0; }
@@ -590,6 +613,7 @@ body.story:not(.deck) .s-inner.wide { max-width: 1280px; }
 body.story:not(.deck) .s-head { font-size: clamp(28px, 3.4vw, 44px); margin-bottom: 26px; }
 body.story:not(.deck) .vgrid.fill { height: auto; }
 body.story:not(.deck) .vgrid.fill .vt { aspect-ratio: 16 / 9; }
+body.story:not(.deck) .rgrid .vt { aspect-ratio: 1; }
 body.story:not(.deck) .dots, body.story:not(.deck) .deck-exit, body.story:not(.deck) .s-hint { display: none; }
 .deck-exit { position: fixed; top: 14px; left: 18px; z-index: 20; background: none; border: 1px solid var(--line); color: var(--muted);
   border-radius: 999px; padding: 5px 14px; font: 13px Inter, system-ui, sans-serif; cursor: pointer; }
@@ -601,29 +625,104 @@ body.story:not(.deck) .dots, body.story:not(.deck) .deck-exit, body.story:not(.d
 .s-cta kbd { font: 11px "JetBrains Mono", monospace; opacity: .7; margin-left: 6px; }
 body.deck .s-cta { display: none; }
 
-/* Three levels: the inverted pyramid beside one row per level with two example episodes. */
-.lv-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 3vw; align-items: center; }
-.pyr { position: relative; width: 100%; max-width: 640px; margin: 0 auto; }
-body.deck .pyr { max-width: 80vh; }
+/* Three levels: the workflow of the robot on one run with the three levels inserted (levelFlow). Each step is outlined
+   in the colour of the level that guards it, and the card of that level hangs below it. */
+.wf { --gap: clamp(22px, 2.4vw, 40px); --drop: 30px; position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--gap); }
+.wf .l1 { --lc: var(--l1c); } .wf .l2 { --lc: var(--l2c); } .wf .l3 { --lc: var(--l3c); }
+.wf-sys { grid-row: 1; position: relative; margin-bottom: 18px; padding-bottom: 4px; text-align: center; border-bottom: 3px solid var(--l3c); }
+.wf-sys.s2 { grid-column: 1 / 4; border-image: linear-gradient(90deg, var(--l1c) 20%, var(--l2c) 45%) 1; }
+.wf-sys.s1 { grid-column: 4; }
+.wf-sys::before, .wf-sys::after { content: ""; position: absolute; bottom: -12px; width: 3px; height: 12px; background: var(--l3c); }
+.wf-sys::before { left: 0; } .wf-sys::after { right: 0; }
+.wf-sys.s2::before { background: var(--l1c); } .wf-sys.s2::after { background: var(--l2c); }
+.wf-sys b { color: var(--text); font-size: clamp(17px, 1.55vw, 24px); font-weight: 800; margin-right: 10px; }
+.wf-sys span { color: var(--muted); font-size: clamp(13px, 1.05vw, 16px); }
+.wf-st { grid-row: 2; grid-column: var(--c); min-width: 0; display: flex; flex-direction: column; gap: 9px; }
+.wf-h { display: flex; align-items: center; gap: 10px; }
+.wf-h svg { flex: none; width: 40px; height: 40px; padding: 9px; border-radius: 50%; background: color-mix(in srgb, var(--lc) 18%, transparent);
+  fill: none; stroke: var(--lc); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.wf-h i { display: block; font-style: normal; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.wf-h b { display: block; color: var(--text); font-size: clamp(17px, 1.5vw, 23px); font-weight: 700; line-height: 1.1; }
+.wf-st > p { margin: 0; color: var(--muted); font-size: clamp(12px, .98vw, 15px); line-height: 1.4; }
+.wf-p { position: relative; }
+.wf-p > .vt, .wf-code { aspect-ratio: 16 / 9; border-radius: 10px; box-shadow: 0 0 0 2px var(--lc); }
+/* The arrow from one step to the next lies in the gap between their panels. */
+.wf-st:not(.k4) .wf-p::before { content: ""; position: absolute; left: calc(100% + 5px); top: calc(50% - 1.5px); width: calc(var(--gap) - 20px);
+  height: 3px; background: #9aa0aa; transform-origin: left; }
+.wf-st:not(.k4) .wf-p::after { content: ""; position: absolute; left: calc(100% + var(--gap) - 16px); top: calc(50% - 7px); border: 7px solid transparent;
+  border-left: 10px solid #9aa0aa; border-right: 0; }
+.wf-code { display: grid; align-content: center; margin: 0; padding: 12px 16px; overflow: hidden; background: #0d1117; color: #e6edf3;
+  font: 500 clamp(12px, 1.15vw, 18px) / 1.8 "JetBrains Mono", ui-monospace, monospace; }
+.wf-code .c { color: #7d8590; } .wf-code b { color: #d2a8ff; font-weight: 600; } .wf-code s { color: #a5d6ff; text-decoration: none; }
+.wf-say { display: flex; align-items: flex-start; gap: 7px; }
+.vt .wf-say { position: absolute; left: 8px; right: 8px; bottom: 8px; }
+.wf-say svg { flex: none; width: 24px; height: 24px; padding: 4px; border-radius: 50%; background: #23272e; fill: none; stroke: #c3c8d0;
+  stroke-width: 2; stroke-linecap: round; }
+.wf-say span { padding: 6px 11px; border-radius: 4px 12px 12px 12px; background: rgba(18, 20, 25, .92); color: var(--text);
+  font-size: clamp(12px, 1vw, 15px); line-height: 1.35; }
+.wf-cam { position: absolute; left: 8px; top: 8px; padding: 2px 8px; border-radius: 6px; background: rgba(0, 0, 0, .65); color: #fff; font-size: 11px; font-weight: 600; }
+.wf-mark { position: absolute; width: 0; height: 0; }
+.wf-mark::before { content: ""; position: absolute; left: -10px; top: -10px; width: 20px; height: 20px; border: 2px solid #fff; border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .5); }
+.wf-mark b { position: absolute; padding: 1px 6px; border-radius: 5px; background: #fff; color: #000; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.wf-mark.below b { top: 13px; left: 0; transform: translateX(-50%); }
+.wf-mark.above b { bottom: 13px; left: 0; transform: translateX(-50%); }
+.wf-mark.right b { left: 13px; top: -9px; }
+.wf-lv { grid-row: 3; grid-column: var(--c); position: relative; min-width: 0; display: flex; flex-direction: column; gap: 8px; margin-top: var(--drop);
+  padding: 11px 14px 13px; border: 2px solid var(--lc); border-radius: 12px; background: color-mix(in srgb, var(--lc) 8%, var(--card)); }
+/* The line that hangs the card from its steps: one stem, or for two steps a fork. */
+.wf-lv::after { content: ""; position: absolute; left: calc(50% - 1px); top: calc(-2px - var(--drop)); width: 2px; height: var(--drop); background: var(--lc); }
+.wf-lv.l2::before { content: ""; position: absolute; top: calc(-2px - var(--drop)); left: calc((100% - var(--gap)) / 4); right: calc((100% - var(--gap)) / 4);
+  height: calc(var(--drop) / 2); border: 2px solid var(--lc); border-top: 0; }
+.wf-lv.l2::after { top: calc(-2px - var(--drop) / 2); height: calc(var(--drop) / 2); }
+.wf-lh { display: flex; align-items: baseline; gap: 10px; }
+.wf-lh i { font-style: normal; color: var(--lc); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.wf-lh b { color: var(--text); font-size: clamp(18px, 1.6vw, 24px); font-weight: 800; }
+.wf-lh a { margin-left: auto; color: var(--lc); font-size: 14px; font-weight: 700; text-decoration: none; }
+.wf-lh a:hover { text-decoration: underline; }
+.wf-lv h4 { margin: 0; color: var(--lc); font-size: clamp(14px, 1.2vw, 18px); font-weight: 700; }
+.wf-ex { display: grid; gap: 9px; }
+.wf-lv.l2 .wf-ex { grid-template-columns: minmax(0, .85fr) minmax(0, 1fr); gap: 14px; align-items: center; }
+.wf-ex p { margin: 0; color: var(--text); font-size: clamp(13px, 1vw, 15px); line-height: 1.4; }
+.wf-ex .vt { border-radius: 8px; }
+.wf-zoom { aspect-ratio: 2.7 / 1; }
+.wf-zoom img { object-position: 50% 46%; transform: scale(1.7); transform-origin: 47% 46%; }
+.wf-ring { position: absolute; left: 45%; top: 50%; width: 30%; height: 62%; transform: translate(-50%, -50%); border: 2.5px solid var(--l3c);
+  border-radius: 50%; box-shadow: 0 0 0 2px rgba(0, 0, 0, .4); }
+.wf-dots { display: flex; flex-wrap: wrap; gap: 3px; margin-top: auto; padding-top: 2px; }
+.wf-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--lc); cursor: pointer; }
+.wf-dots i.on { box-shadow: 0 0 0 2px #fff; }
+.wf .pyr-tip { z-index: 5; width: 244px; }
+.pyr-tip img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; margin-bottom: 6px; }
+/* The run: the steps appear from left to right with their arrows, and each card drops in after the steps it guards
+   and fills with its dots. */
+@keyframes wf-in { from { opacity: 0; transform: translateX(-14px); } }
+@keyframes wf-drop { from { opacity: 0; transform: translateY(-14px); } }
+@keyframes wf-grow { from { transform: scaleX(0); } }
+@keyframes wf-dot { from { opacity: 0; transform: scale(0); } }
+.wf.pre .wf-st, .wf.pre .wf-lv { opacity: 0; }
+.wf.go .wf-st { animation: wf-in .45s ease-out var(--t) both; }
+.wf.go .wf-st .wf-p::before { animation: wf-grow .3s ease-out calc(var(--t) + .35s) both; }
+.wf.go .wf-st .wf-p::after { animation: wf-dot .2s ease-out calc(var(--t) + .6s) both; }
+.wf.go .wf-lv { animation: wf-drop .45s ease-out var(--t) both; }
+.wf.go .wf-dots i { animation: wf-dot .3s ease-out calc(var(--t) + .45s + var(--k) * 12ms) both; }
 body.deck #s-levels .s-head, body.deck #s-cover .s-head { margin-bottom: 2vh; }
-.lv-list { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px 18px; }
-.lv-list .lv-row { grid-column: 2; }
-/* The system a group of levels tests, as a labelled bracket to the left of its rows. */
-.sys { grid-column: 1; border-left: 4px solid var(--l3c); padding: 4px 0 4px 14px; display: flex; flex-direction: column; justify-content: center; }
-.sys.s2 { grid-row: 1 / 3; border-image: linear-gradient(var(--l1c), var(--l2c)) 1; }
-.sys.s1 { grid-row: 3; }
-.sys b { color: var(--text); font-size: clamp(20px, 1.9vw, 30px); font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; }
-.sys span { color: var(--muted); font-size: clamp(13px, 1.1vw, 17px); }
-.lv-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 12px 14px 12px 18px;
-  border: 1px solid var(--line); border-left: 4px solid var(--lc); border-radius: 12px; background: var(--card); transition: opacity .2s; }
-.lv-row.l1 { --lc: var(--l1c); } .lv-row.l2 { --lc: var(--l2c); } .lv-row.l3 { --lc: var(--l3c); }
-.lv-row.dim { opacity: .4; }
-.lv-row i { font-style: normal; color: var(--lc); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
-.lv-row h3 { margin: 2px 0 4px; font-size: clamp(20px, 1.8vw, 28px); color: var(--text); }
-.lv-row p { margin: 0 0 6px; color: var(--muted); font-size: clamp(13px, 1.05vw, 16px); }
-.lv-row b { color: var(--lc); font-size: 14px; }
-.lv-row .vgrid { grid-template-columns: repeat(2, 150px); gap: 6px; }
-body.deck .lv-row .vgrid { grid-template-columns: repeat(2, calc(11vh * 16 / 9)); }
+/* Slides on short screens, such as 1280x720, keep the workflow and the cards on screen. */
+@media (max-height: 820px) {
+  body.deck #s-levels { padding-top: 34px; padding-bottom: 30px; }
+  body.deck .wf { --drop: 24px; }
+  body.deck .wf-sys { margin-bottom: 14px; }
+  body.deck .wf-st > p, body.deck .wf-h i { display: none; }
+  body.deck .wf-h svg { width: 34px; height: 34px; padding: 7px; }
+  body.deck .wf-lv { padding: 9px 12px 10px; gap: 6px; }
+  body.deck .wf-dots { gap: 2.5px; }
+  body.deck .wf-dots i { width: 8px; height: 8px; }
+  body.deck .rgrid figcaption { padding: 34px 10px 8px; }
+  body.deck .rgrid .rsign { width: 36px; }
+  body.deck .rgrid figcaption b span { font-size: 15px; }
+  body.deck .rgrid figcaption > span { margin-top: 4px; font-size: 12px; }
+}
 
 /* Coverage: the pyramid again, coloured by a chosen taxonomy. */
 body.deck #s-cover .div-right { max-width: 74vh; justify-self: center; width: 100%; }
@@ -633,9 +732,28 @@ body.deck #s-cover .cb { padding: 6px 10px; }
 body.deck #s-cover .cb b { font-size: 20px; }
 body.deck #s-cover .lg { padding: 2px; }
 @media (max-width: 860px) {
-  .lv-wrap { grid-template-columns: 1fr; }
-  .lv-row { grid-template-columns: 1fr; }
-  .lv-list { grid-template-columns: 1fr; }
-  .lv-list .lv-row, .lv-list .sys { grid-column: 1; grid-row: auto; }
-  .lv-row .vgrid { grid-template-columns: repeat(2, 1fr); }
+  .wf { grid-template-columns: minmax(0, 1fr); --drop: 16px; }
+  .wf-sys { display: none; }
+  .wf-st, .wf-lv { grid-row: auto; grid-column: 1; }
+  .wf-st { margin-top: 18px; }
+  .wf-st .wf-p::before, .wf-st .wf-p::after, .wf-lv.l2::before { display: none; }
+  .wf-lv.l2::after { top: calc(-2px - var(--drop)); height: var(--drop); }
+  .wf-lv.l2 .wf-ex { grid-template-columns: minmax(0, 1fr); }
+  .wf-code { aspect-ratio: auto; }
+}
+
+/* Risk categories: a mosaic of clips, larger for categories with more tasks; two columns on a phone. */
+.rk-mosaic { position: relative; width: 100%; aspect-ratio: 1840 / 840; max-height: 66vh; margin: 0 auto; }
+.rk-mosaic .vt { position: absolute; aspect-ratio: auto; border: 3px solid var(--bg); box-sizing: border-box; }
+.rk-mosaic .vt.cap-top figcaption { top: 0; bottom: auto; padding: 10px 12px 34px; background: linear-gradient(rgba(0, 0, 0, .86), rgba(0, 0, 0, .55) 62%, transparent); }
+.rk-mosaic .vt figcaption em { font-style: normal; }
+.rk-mosaic .vt[data-mid] figcaption em, .rk-mosaic .vt[data-small] figcaption em { display: none; }
+.rk-mosaic .vt[data-mid] figcaption > span i, .rk-mosaic .vt[data-small] figcaption > span i { margin-top: 0; }
+.rk-mosaic .vt[data-small] .rsign { width: clamp(26px, 2vw, 38px); }
+.rk-mosaic .vt[data-small] figcaption b span { font-size: clamp(11px, .9vw, 15px); }
+@media (max-width: 860px), (max-height: 560px) {
+  .rk-mosaic { aspect-ratio: auto; max-height: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .rk-mosaic .vt { position: relative; left: auto !important; top: auto !important; width: auto !important; height: auto !important; border: 0; }
+  .rk-mosaic .vt figcaption em { display: inline !important; }
+  .rk-mosaic .vt.cap-top figcaption { top: auto; bottom: 0; padding: 30px 9px 8px; background: linear-gradient(transparent, rgba(0, 0, 0, .62) 38%, rgba(0, 0, 0, .9)); }
 }
