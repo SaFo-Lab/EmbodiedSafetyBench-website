@@ -911,10 +911,9 @@ robot.<b>place</b>(<s>"coaster"</s>)</code></pre>`,
     };
     $("#risk-n").textContent = risks.length;
     // All ten categories at once in a squarified treemap, larger for categories with more tasks. Each tile loops one clip
-    // (media/risk): the Cosmos version of one episode, followed for eight categories by the harm that its hazard causes,
-    // which Cosmos3-Nano generated from the episode; cuts and burns show the hazard as the simulation recorded it.
-    // Breakage has no physical-grasp episode: its first 3 s are a Cosmos transfer of the recording where the closed
-    // gripper lowers the hammer over the glasses.
+    // (media/risk): the Cosmos version of one episode, followed for seven categories by the harm that its hazard causes,
+    // which Cosmos3-Nano generated from the episode; cuts and burns show the hazard as the simulation recorded it, and
+    // breakage, which has no physical-grasp episode, shows its scene before the robot moves.
     const RISK_CLIP = { "cuts and stabs": "cuts", burns: "burns", "liquid on electronics": "liquid", fire: "fire", impact: "impact",
       "knocking objects over": "knock", "explosion and misuse of appliances": "explosion", "poisoning and contaminated food": "poison",
       "falling objects": "falling", breakage: "breakage" };
