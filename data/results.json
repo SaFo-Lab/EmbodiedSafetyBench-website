@@ -184,33 +184,33 @@
       ],
       "rows": {
         "claude": {
-          "success": 55.3,
-          "unsafe": 72.0,
-          "safe_success": 6.1,
+          "success": 56.8,
+          "unsafe": 71.2,
+          "safe_success": 6.8,
           "n": 132
         },
         "gpt": {
           "success": 39.4,
-          "unsafe": 45.5,
-          "safe_success": 8.3,
+          "unsafe": 44.7,
+          "safe_success": 9.1,
           "n": 132
         },
         "gemini": {
-          "success": 52.3,
-          "unsafe": 68.2,
+          "success": 55.3,
+          "unsafe": 69.7,
           "safe_success": 0.8,
           "n": 132
         },
         "qwen": {
-          "success": 62.9,
+          "success": 59.1,
           "unsafe": 80.3,
           "safe_success": 3.8,
           "n": 132
         },
         "grok": {
-          "success": 53.8,
-          "unsafe": 74.2,
-          "safe_success": 1.5,
+          "success": 56.1,
+          "unsafe": 76.5,
+          "safe_success": 2.3,
           "n": 132
         }
       },
@@ -276,8 +276,8 @@
           "harmful": 45.2
         },
         "motion": {
-          "unsafe": 72.0,
-          "safe_success": 6.1
+          "unsafe": 71.2,
+          "safe_success": 6.8
         }
       },
       "gpt": {
@@ -289,8 +289,8 @@
           "harmful": 38.7
         },
         "motion": {
-          "unsafe": 45.5,
-          "safe_success": 8.3
+          "unsafe": 44.7,
+          "safe_success": 9.1
         }
       },
       "gemini": {
@@ -302,7 +302,7 @@
           "harmful": 22.6
         },
         "motion": {
-          "unsafe": 68.2,
+          "unsafe": 69.7,
           "safe_success": 0.8
         }
       },
@@ -328,8 +328,8 @@
           "harmful": 71.0
         },
         "motion": {
-          "unsafe": 74.2,
-          "safe_success": 1.5
+          "unsafe": 76.5,
+          "safe_success": 2.3
         }
       }
     }
@@ -498,21 +498,21 @@
       "description": "Benign tasks whose default motion is unsafe. The rate of episodes in which the agent completes the task and no safety metric passes its threshold.",
       "rows": {
         "claude": {
-          "value": 6.1,
+          "value": 6.8,
           "n": 132,
           "also": [
             [
               "Success rate",
-              55.3
+              56.8
             ],
             [
               "Unsafe rate",
-              72.0
+              71.2
             ]
           ]
         },
         "gpt": {
-          "value": 8.3,
+          "value": 9.1,
           "n": 132,
           "also": [
             [
@@ -521,7 +521,7 @@
             ],
             [
               "Unsafe rate",
-              45.5
+              44.7
             ]
           ]
         },
@@ -531,11 +531,11 @@
           "also": [
             [
               "Success rate",
-              52.3
+              55.3
             ],
             [
               "Unsafe rate",
-              68.2
+              69.7
             ]
           ]
         },
@@ -545,7 +545,7 @@
           "also": [
             [
               "Success rate",
-              62.9
+              59.1
             ],
             [
               "Unsafe rate",
@@ -554,16 +554,16 @@
           ]
         },
         "grok": {
-          "value": 1.5,
+          "value": 2.3,
           "n": 132,
           "also": [
             [
               "Success rate",
-              53.8
+              56.1
             ],
             [
               "Unsafe rate",
-              74.2
+              76.5
             ]
           ]
         }
