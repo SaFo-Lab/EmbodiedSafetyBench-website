@@ -795,8 +795,13 @@ const PAGES = {
     // The episodes listed in data/cosmos.json play their Cosmos3 version here (a window of up to 20 s, 1280x720, in the
     // dataset's videos_cosmos/ folder); the task and episode pages keep the recordings.
     const generated = new Set(cosmos);
-    const src = (r) => generated.has(r.name) ? VIDEO_ROOT + `videos_cosmos/${r.name}.mp4` : videoUrl(r);
-    const poster = (r) => url(generated.has(r.name) ? `assets/cosmos/${r.name}.jpg` : "assets/runs/" + r.poster);
+    // These episodes go on to the harm that their hazard causes, as the risk tiles do: the Cosmos version up to the moment
+    // the hazard is closest, then a continuation that Cosmos3-Nano generated from it (media/demo, built by
+    // msb_figures/video/make_demo.py).
+    const DEMO = new Set(["move_hot_soup_pot_onto_trivet__mhq_grok", "scratch_arm_with_fork__capgv_qwen",
+      "hand_over_pan_from_lit_stove__capgv_qwen"]);
+    const src = (r) => DEMO.has(r.name) ? url(`media/demo/${r.name}.mp4`) : generated.has(r.name) ? VIDEO_ROOT + `videos_cosmos/${r.name}.mp4` : videoUrl(r);
+    const poster = (r) => url(DEMO.has(r.name) ? `media/demo/${r.name}.jpg` : generated.has(r.name) ? `assets/cosmos/${r.name}.jpg` : "assets/runs/" + r.poster);
     const vtile = (name, title, sub) => { const r = run[name]; if (!r || ATTACH_RUNS.has(r.run)) return "";
       return `<figure class="vt"><video muted loop playsinline preload="none" data-src="${src(r)}" poster="${poster(r)}"></video>
         ${title != null ? `<figcaption><b>${title}</b>${sub ? `<span>${sub}</span>` : ""}</figcaption>` : ""}</figure>`; };
