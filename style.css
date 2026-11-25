@@ -461,7 +461,7 @@ body.scrolled .nav { padding-top: 5px; padding-bottom: 5px; box-shadow: 0 10px 3
 @media (max-width: 860px) { .robots { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .robots, .robots.two { grid-template-columns: 1fr; } }
 
-/* Home page: black sections, one message per section, which Present turns into full-screen slides for talks. -------- */
+/* Home page: black sections, one message per section. ---------------------------------------------------------------- */
 html.deck-html { scroll-snap-type: y mandatory; }
 body.story { background: var(--bg); color: var(--text); --bg: #000; --card: #0b0c0f; --text: #eceef2; --muted: #9aa0aa; --line: #2a2d33;
   --accent: #ff8a4c; --accent-soft: #3a1f12; --l1c: #f06595; --l2c: #ffa94d; --l3c: #4dabf7; }
@@ -603,8 +603,8 @@ body.deck .nav, body.deck footer { display: none; }
   .dots { display: none; }
 }
 
-/* The home page sections as an ordinary page. Present (P) adds .deck and turns the same sections into full-screen
-   slides. */
+/* The home page sections as an ordinary page. setPresent in app.js adds .deck and turns the same sections into
+   full-screen slides. */
 .s-end .s-huge { color: var(--text); }
 body.story:not(.deck) .slide { min-height: 0; padding: 96px 16px 16px; overflow: visible; }
 body.story:not(.deck) .slide.s-title, body.story:not(.deck) .slide.s-full { min-height: 86vh; overflow: hidden; padding: 64px 16px; }
@@ -618,6 +618,13 @@ body.story:not(.deck) .dots, body.story:not(.deck) .deck-exit, body.story:not(.d
 .deck-exit { position: fixed; top: 14px; left: 18px; z-index: 20; background: none; border: 1px solid var(--line); color: var(--muted);
   border-radius: 999px; padding: 5px 14px; font: 13px Inter, system-ui, sans-serif; cursor: pointer; }
 .deck-exit:hover { color: var(--text); border-color: var(--muted); }
+/* The video of the benchmark, played over the page by the Present button. */
+.vplay { position: fixed; inset: 0; z-index: 40; background: #000; display: flex; align-items: center; justify-content: center; }
+.vplay[hidden] { display: none; }
+.vplay video { width: 100%; height: 100%; object-fit: contain; outline: none; }
+.vplay-close { position: absolute; top: 14px; left: 18px; z-index: 1; background: rgba(0, 0, 0, .45); border: 1px solid #3d4148; color: #adb5bd;
+  border-radius: 999px; padding: 5px 14px; font: 13px Inter, system-ui, sans-serif; cursor: pointer; }
+.vplay-close:hover { color: #fff; border-color: #adb5bd; }
 .s-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 4vh; }
 .s-cta a, .s-cta button { padding: 11px 22px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .35); background: rgba(0, 0, 0, .35);
   color: #fff; text-decoration: none; font: 600 15px Inter, system-ui, sans-serif; cursor: pointer; }

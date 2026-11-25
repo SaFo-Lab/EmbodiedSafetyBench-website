@@ -783,8 +783,8 @@ const PAGES = {
   async method() {},
 
   // The home page: the overview as page sections on a black background, one message per section with recorded episodes
-  // playing in grids, which Present (P) turns into full-screen slides for talks. Videos load and play only while their
-  // section is on screen.
+  // playing in grids, and a Present button (P) that plays the video of the benchmark. Videos load and play only while
+  // their section is on screen.
   async home() {
     const [results, runs, tasks, rc, cosmos] = await Promise.all([data("results.json"), data("runs.json"), data("tasks.json"),
       data("robocasa.json"), data("cosmos.json")]);
@@ -965,9 +965,10 @@ robot.<b>place</b>(<s>"coaster"</s>)</code></pre>`,
       return `<div class="rp ${LEVEL_TAG[lv]}"><h3>${LEVEL_NAMES[lv]} level</h3><p>${g.metric}</p>${rows.map(([m, x]) => `<div class="rp-row"><span>${MODEL_NAMES[m]}</span>
         <i style="--w:${x.value / 100}"></i><b>${x.value}%</b></div>`).join("")}</div>`; }).join("");
 
-    // Slide mechanics: videos play while their section is on screen. P or the Present button turns the sections into
-    // full-screen slides, where keys and dots move between them; Esc, the Exit button or the end of full screen leaves
-    // them. The pyramids measure their width again after each switch.
+    // Slide mechanics: videos play while their section is on screen. setPresent turns the sections into full-screen
+    // slides, where keys and dots move between them; Esc, the Exit button or the end of full screen leaves them. Since
+    // the Present button plays the video, nothing turns the slides on at the moment. The pyramids measure their width
+    // again after each switch.
     const setPresent = (on) => {
       const mid = scrollY + innerHeight * 0.4;
       const keep = slides.find((x) => x.offsetTop <= mid && mid < x.offsetTop + x.offsetHeight) || slides[current];
@@ -979,8 +980,26 @@ robot.<b>place</b>(<s>"coaster"</s>)</code></pre>`,
     };
     document.body.insertAdjacentHTML("afterbegin", `<button class="deck-exit">Exit presentation · Esc</button>`);
     $(".deck-exit").onclick = () => setPresent(false);
-    document.querySelectorAll("[data-present]").forEach((b) => { b.onclick = () => setPresent(true); });
-    document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("deck")) setPresent(false); });
+    // The Present button and P play the video of the benchmark over the page, in full screen where the browser allows it;
+    // Esc, the Close button or the end of full screen close it.
+    document.body.insertAdjacentHTML("beforeend", `<div class="vplay" hidden><video controls playsinline preload="none"
+      poster="${url("media/robot_safety_exam.jpg")}" data-src="${url("media/robot_safety_exam.mp4")}"></video>
+      <button class="vplay-close">Close · Esc</button></div>`);
+    const vp = $(".vplay"), vv = $(".vplay video");
+    const setVideo = (on) => {
+      vp.hidden = !on;
+      if (on) {
+        if (!vv.src) vv.src = vv.dataset.src;
+        vv.currentTime = 0; vv.focus(); vv.play().catch(() => {});
+        if (!document.fullscreenElement && vp.requestFullscreen) vp.requestFullscreen().catch(() => {});
+      } else { vv.pause(); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); }
+    };
+    $(".vplay-close").onclick = () => setVideo(false);
+    document.querySelectorAll("[data-present]").forEach((b) => { b.onclick = () => setVideo(true); });
+    document.addEventListener("fullscreenchange", () => {
+      if (!document.fullscreenElement && !vp.hidden) setVideo(false);
+      if (!document.fullscreenElement && document.body.classList.contains("deck")) setPresent(false);
+    });
     const slides = [...document.querySelectorAll(".slide")];
     $("#dots").innerHTML = slides.map((s, i) => `<a href="#${s.id}" title="${i + 1}"></a>`).join("");
     const dots = [...$("#dots").children];
@@ -999,7 +1018,8 @@ robot.<b>place</b>(<s>"coaster"</s>)</code></pre>`,
     document.addEventListener("keydown", (e) => {
       if (e.target.closest?.("input, textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
       const k = e.key;
-      if (!document.body.classList.contains("deck")) { if (k === "p" || k === "P") { e.preventDefault(); setPresent(true); } return; }
+      if (!vp.hidden) { if (k === "Escape" || k === "p" || k === "P") { e.preventDefault(); setVideo(false); } return; }
+      if (!document.body.classList.contains("deck")) { if (k === "p" || k === "P") { e.preventDefault(); setVideo(true); } return; }
       if (k === "Escape" || k === "p" || k === "P") { e.preventDefault(); setPresent(false); }
       else if (["ArrowDown", "ArrowRight", "PageDown", " "].includes(k)) { e.preventDefault(); go(current + 1); }
       else if (["ArrowUp", "ArrowLeft", "PageUp"].includes(k)) { e.preventDefault(); go(current - 1); }
