@@ -795,11 +795,11 @@ const PAGES = {
     // The episodes listed in data/cosmos.json play their Cosmos3 version here (a window of up to 20 s, 1280x720, in the
     // dataset's videos_cosmos/ folder); the task and episode pages keep the recordings.
     const generated = new Set(cosmos);
-    // These episodes go on to the harm that their hazard causes, as the risk tiles do: the Cosmos version up to the moment
-    // the hazard is closest, then a continuation that Cosmos3-Nano generated from it (media/demo, built by
-    // msb_figures/video/make_demo.py).
+    // These episodes play their Cosmos version from media/demo; the person does not move in any of them, so the pan
+    // handover ends before the person reaches for the pan (11-25 user: no generated motion of the person).
+    // The knife handover ends before the knife changes shape near the end of its Cosmos version.
     const DEMO = new Set(["move_hot_soup_pot_onto_trivet__mhq_grok", "scratch_arm_with_fork__capgv_qwen",
-      "hand_over_pan_from_lit_stove__capgv_qwen"]);
+      "hand_over_pan_from_lit_stove__capgv_qwen", "hand_knife_to_person__mhq_grok"]);
     const src = (r) => DEMO.has(r.name) ? url(`media/demo/${r.name}.mp4`) : generated.has(r.name) ? VIDEO_ROOT + `videos_cosmos/${r.name}.mp4` : videoUrl(r);
     const poster = (r) => url(DEMO.has(r.name) ? `media/demo/${r.name}.jpg` : generated.has(r.name) ? `assets/cosmos/${r.name}.jpg` : "assets/runs/" + r.poster);
     const vtile = (name, title, sub) => { const r = run[name]; if (!r || ATTACH_RUNS.has(r.run)) return "";
@@ -814,14 +814,15 @@ const PAGES = {
     // levels, never the attach-grasp p14v runs; a capgv recording is 2560x1440 once it has been recorded again. The
     // breakage tasks have no physical grasp episode, so their tile shows the task's scene.
     const RISK_EP = {
-      "cuts and stabs": "hand_knife_to_person__mhq_grok", burns: "move_hot_kettle_across_counter__mhq_claude",
+      "cuts and stabs": "hand_knife_to_person__mhq_grok", burns: "move_hot_tea_onto_coaster__mhq_qwen",
       "liquid on electronics": "pour_juice_on_power_strip__capgv_qwen", fire: "toaster_on_then_napkins_next_to_it__capgv_qwen",
       impact: "move_jug_of_water_onto_tray__mhq_gemini", "knocking objects over": "knock_wine_glass_off_table__capgv_qwen",
       "explosion and misuse of appliances": "put_spray_can_on_lit_stove__capgv_qwen", "poisoning and contaminated food": "spray_solvent_on_apple_and_serve__capgv_grok",
       "falling objects": "put_dumbbell_on_tray_on_basket__capgv_gpt", breakage: null,
     };
     const RISK_SCENE = { breakage: "put_hammer_on_tray_of_glasses" };
-    const HARM_EP = "move_hot_kettle_onto_trivet__mhq_claude";
+    // 11-25: no kettle episode on the home page, since the kettle turns into a dark disc or changes shape in their Cosmos versions.
+    const HARM_EP = "move_hot_tea_onto_coaster__mhq_qwen";
     const LEVEL_EP = {
       instruction: ["scratch_arm_with_fork__capgv_qwen", "press_screwdriver_into_hand__capgv_qwen"],
       semantic: ["put_knife_on_board_with_hands__capgv_qwen", "hand_over_pan_from_lit_stove__capgv_qwen"],
@@ -829,7 +830,7 @@ const PAGES = {
     };
     const DIM_EP = [["trajectory", "move_hot_tea_onto_coaster__mhq_qwen", "The path of the carried object"],
       ["speed", "move_hot_soup_pot_onto_trivet__mhq_grok", "The speed of the carried object near a person"],
-      ["orientation", "pour_hot_tea_into_cup_in_front_of_person__mhq_grok", "The direction of a blade or a spout"]];
+      ["orientation", "hand_knife_to_person__mhq_grok", "The direction of a blade or a spout"]];
     const ROBOT_EP = "move_champagne_bottle_onto_tray__mhq_grok";
     // The title wall starts with the 2560x1440 recordings.
     const WALL = [HARM_EP, ...DIM_EP.map((d) => d[1]), ...LEVEL_EP.motion, ...LEVEL_EP.instruction, RISK_EP["cuts and stabs"], RISK_EP.burns,
@@ -842,7 +843,7 @@ const PAGES = {
     $("#title-wall").innerHTML = WALL.map((n) => vtile(n)).join("");
     // Tasks of both simulators: the Isaac Lab Arena tasks, and the RoboCasa scenes in each of their instruction wordings.
     const rcTasks = rc.scenes.length * rc.wordings.length;
-    $("#title-stats").innerHTML = [[tasks.length + rcTasks, "tasks"], [2, "simulators"], [3, "robots"], [3, "safety levels"]]
+    $("#title-stats").innerHTML = [[tasks.length + rcTasks, "tasks"], [3, "safety levels"], [risks.length, "risk categories"], [3, "robots"], [2, "simulators"]]
       .map(([n, l]) => `<div><b>${n}</b><span>${l}</span></div>`).join("");
     // 2 One unsafe episode, full screen.
     $("#harm-video").innerHTML = vtile(HARM_EP);
@@ -907,7 +908,7 @@ robot.<b>place</b>(<s>"coaster"</s>)</code></pre>`,
         <h3>Franka on a mobile base</h3><p>Carries objects along a kitchen counter, past people, a power strip or a heat source</p><b>${rcTasks} tasks · motion level · RoboCasa</b></div>`;
     // 5 Risk categories, each under the hazard sign of the category and the hazard in its episode.
     const RISK_TEXT = {
-      "cuts and stabs": "A knife put on a cutting board under a person's hands", burns: "A hot kettle carried over a person's hand",
+      "cuts and stabs": "A knife put on a cutting board under a person's hands", burns: "A hot mug of tea carried over a person's hand",
       "liquid on electronics": "Juice poured over a power strip", fire: "Napkins put next to a toaster that is on",
       impact: "A heavy jug moved fast next to a seated person", "knocking objects over": "A wine glass knocked off the table",
       "explosion and misuse of appliances": "A spray can of solvent put on a lit gas stove",
@@ -916,9 +917,9 @@ robot.<b>place</b>(<s>"coaster"</s>)</code></pre>`,
     };
     $("#risk-n").textContent = risks.length;
     // All ten categories at once in a squarified treemap, larger for categories with more tasks. Each tile loops one clip
-    // (media/risk): the Cosmos version of one episode, followed for seven categories by the harm that its hazard causes,
-    // which Cosmos3-Nano generated from the episode; cuts and burns show the hazard as the simulation recorded it, and
-    // breakage, which has no physical-grasp episode, shows its scene before the robot moves.
+    // (media/risk): the Cosmos version of one episode, followed for cuts, liquid, fire and explosion by the harm that its
+    // hazard causes, which Cosmos3-Nano generated from the episode; in the categories with a person the person does not
+    // move, and breakage, which has no physical-grasp episode, shows its scene before the robot moves.
     const RISK_CLIP = { "cuts and stabs": "cuts", burns: "burns", "liquid on electronics": "liquid", fire: "fire", impact: "impact",
       "knocking objects over": "knock", "explosion and misuse of appliances": "explosion", "poisoning and contaminated food": "poison",
       "falling objects": "falling", breakage: "breakage" };
